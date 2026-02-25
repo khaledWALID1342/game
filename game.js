@@ -1,59 +1,43 @@
 // ==========================================================================
-// 🕹️ THE MASTER GAME CONTROLLER (V6.5 - THE CINEMATIC MAESTRO)
+// 🕹️ THE MASTER GAME CONTROLLER (V7.0 - TERRITORY & ARMY ENGINE)
 // ==========================================================================
-// العقل المدبر للعبة مع إضافة الكاميرا السينمائية ومعالجة ثغرات الأداء.
 
 import { initAuth } from './auth.js';
 import { NetCode } from './network.js';
 import { UI } from './ui.js';
 import { VFX } from './effects.js';
 import { MARKET } from './config.js';
+import { ref, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { db } from './config.js'; // نحتاج الداتابيز للتحديث المباشر
 
 class GameController {
     constructor() {
         this.map = null;
-        this.markers = {};        // تخزين أيقونات اللاعبين (Markers)
-        this.territories = {};    // تخزين دوائر النفوذ (Circles)
-        this.playersData = {};    // الذاكرة المؤقتة لبيانات اللاعبين
-        
-        // حالات اللعبة (Game States)
+        this.markers = {};        
+        this.territories = {};    
+        this.playersData = {};    
         this.isDeploying = false; 
-        this.isTargeting = false; 
     }
 
-    // ==========================================
-    // 1. الإقلاع المبدئي (System Boot)
-    // ==========================================
     boot() {
-        console.log("🕹️ [GAME] نظام التحكم المركزي جاهز. في انتظار الهوية...");
-        
         initAuth();
-
         window.addEventListener('CommanderAuthorized', (e) => {
-            const myPlayer = e.detail.player;
-            this.startGame(myPlayer);
+            this.startGame(e.detail.player);
         });
     }
 
-    // ==========================================
-    // 2. تشغيل المحركات وبناء العالم (World Building)
-    // ==========================================
     startGame(myPlayer) {
         this.initTacticalMap();
         UI.init();
         VFX.init(this.map);
         NetCode.init(myPlayer); 
         this.bindGlobalEvents();
-        
-        console.log("🌍 [GAME] تم بناء العالم والمحركات تعمل بأقصى طاقة!");
     }
 
     initTacticalMap() {
         this.map = L.map('map', { 
             zoomControl: false, 
             attributionControl: false,
-            maxBounds: [[-90, -180], [90, 180]],
-            maxBoundsViscosity: 1.0,
             zoomSnap: 0.5
         }).setView([20, 0], 3);
 
@@ -62,52 +46,105 @@ class GameController {
         }).addTo(this.map);
 
         this.map.on('click', (e) => this.handleMapClick(e.latlng));
-
-        // 🛠️ الإصلاح السحري: إجبار الخريطة على أخذ مقاس الشاشة كاملة لتجنب الشاشة السوداء
-        setTimeout(() => { this.map.invalidateSize(); }, 1500);
+        setTimeout(() => { this.map.invalidateSize(); }, 1000);
     }
 
-    // ==========================================
-    // 3. إدارة الأحداث والعمليات التكتيكية
-    // ==========================================
     bindGlobalEvents() {
         window.addEventListener('Sync:MapUpdated', (e) => {
             this.playersData = e.detail;
             this.renderWorld();
         });
 
+        // 🛑 إصلاح التمركز: يمنع تغيير المكان لو اللاعب موجود بالفعل
         window.addEventListener('UI:ActionLocate', () => {
-            if (NetCode.currentPlayer.health <= 0) {
-                return Swal.fire('قاعدة مدمرة', 'أنت ميت! قم بإصلاح قاعدتك أولاً.', 'error');
+            if (NetCode.currentPlayer.lat) {
+                return Swal.fire('تم التمركز مسبقاً', 'قاعدتك موجودة بالفعل على الخريطة! لا يمكنك تغيير موقعك الأساسي.', 'warning');
             }
             this.isDeploying = true;
             document.getElementById('map-wrapper').style.cursor = 'crosshair';
-            
-            // إضافة تأثير بصري للرادار عند طلب التمركز
             window.dispatchEvent(new CustomEvent('AI:TriggerRadarScan'));
-
-            Swal.fire({
-                title: 'تحديد الموقع 📍', text: 'اضغط على أي مكان استراتيجي في الخريطة لنشر قاعدتك.',
-                icon: 'info', toast: true, position: 'top', showConfirmButton: false, timer: 3000
-            });
+            Swal.fire({ title: 'تحديد الموقع 📍', text: 'اضغط على الخريطة لنشر قاعدتك والبدء في احتلال المنطقة.', icon: 'info', toast: true, position: 'top', showConfirmButton: false, timer: 3000 });
         });
 
+        // ⛏️ التعدين (Mining)
+        window.addEventListener('UI:ActionMine', () => {
+            if (!NetCode.currentPlayer.lat) return Swal.fire('خطأ', 'تمركز أولاً!', 'error');
+            const newCoins = NetCode.currentPlayer.coins + 15;
+            update(ref(db, `servers/${NetCode.serverName}/players/${NetCode.currentPlayer.id}`), { coins: newCoins });
+            Swal.fire({ title: '+15 موارد', icon: 'success', toast: true, position: 'bottom', timer: 1000, showConfirmButton: false });
+        });
+
+        // 🛒 السوق (نظام الجيش والاحتلال الجديد)
+        window.addEventListener('UI:ActionShop', () => this.openTacticalMarket());
+
         window.addEventListener('Combat:MissileLaunched', (e) => {
-            const { attackerId, targetId, weaponType } = e.detail;
-            this.routeMissile(attackerId, targetId, weaponType);
+            this.routeMissile(e.detail.attackerId, e.detail.targetId, e.detail.weaponType);
         });
     }
 
-    // ==========================================
-    // 4. رسم العالم باحترافية (World Rendering) 🗺️
-    // ==========================================
+    openTacticalMarket() {
+        if (!NetCode.currentPlayer.lat) return Swal.fire('خطأ', 'تمركز في الخريطة أولاً لفتح السوق!', 'error');
+
+        // جلب مستوى الجيش الحالي (الافتراضي 1)
+        let armyLevel = NetCode.currentPlayer.armyLevel || 1;
+        let expandCost = 100 + (NetCode.currentPlayer.score * 2); // تكلفة التوسع بتزيد مع الوقت
+
+        Swal.fire({
+            title: 'مركز القيادة والتطوير 🛠️',
+            html: `
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                    <button id="buy-rocket" class="cyber-button" style="border-color:var(--neon-blue);">🚀 شراء صواريخ (50 كوين)</button>
+                    <hr style="border-color: rgba(255,255,255,0.1);">
+                    <div style="text-align:right; font-size:0.8rem; color:var(--neon-gold);">تطويرات الإمبراطورية:</div>
+                    <button id="upg-territory" class="cyber-button" style="border-color:var(--neon-green);">🚩 توسيع النفوذ واللون (${expandCost} كوين)</button>
+                    <button id="upg-army" class="cyber-button" style="border-color:var(--neon-red);">🪖 ترقية الجيش [مستوى ${armyLevel}] (200 كوين)</button>
+                </div>
+            `,
+            background: 'var(--bg-glass)', color: '#fff', showConfirmButton: false, showCloseButton: true,
+            didOpen: () => {
+                document.getElementById('buy-rocket').addEventListener('click', () => {
+                    if (NetCode.currentPlayer.coins >= 50) {
+                        update(ref(db, `servers/${NetCode.serverName}/players/${NetCode.currentPlayer.id}`), { 
+                            coins: NetCode.currentPlayer.coins - 50, rockets: NetCode.currentPlayer.rockets + 3 
+                        });
+                        Swal.fire({title: 'تم التذخير!', toast:true, icon:'success', timer:1000, showConfirmButton:false});
+                    }
+                });
+
+                // نظام التوسع (Territory Expansion)
+                document.getElementById('upg-territory').addEventListener('click', () => {
+                    if (NetCode.currentPlayer.coins >= expandCost) {
+                        update(ref(db, `servers/${NetCode.serverName}/players/${NetCode.currentPlayer.id}`), { 
+                            coins: NetCode.currentPlayer.coins - expandCost,
+                            territoryRange: NetCode.currentPlayer.territoryRange + 20000, // مساحة اللون تزيد 20كم
+                            score: NetCode.currentPlayer.score + 50
+                        });
+                        Swal.close();
+                        Swal.fire('تم احتلال مناطق جديدة!', 'دائرة نفوذك زادت على الخريطة.', 'success');
+                    } else { Swal.fire('موارد غير كافية', '', 'error'); }
+                });
+
+                // نظام تطوير الجيش
+                document.getElementById('upg-army').addEventListener('click', () => {
+                    if (NetCode.currentPlayer.coins >= 200) {
+                        update(ref(db, `servers/${NetCode.serverName}/players/${NetCode.currentPlayer.id}`), { 
+                            coins: NetCode.currentPlayer.coins - 200,
+                            armyLevel: armyLevel + 1
+                        });
+                        Swal.close();
+                        Swal.fire('ترقية عسكرية!', `وصل جيشك للمستوى ${armyLevel + 1}! قوة الهجوم زادت.`, 'success');
+                    } else { Swal.fire('موارد غير كافية', '', 'error'); }
+                });
+            }
+        });
+    }
+
     renderWorld() {
         for (let id in this.markers) {
             if (!this.playersData[id] || this.playersData[id].status === 'offline') {
                 this.map.removeLayer(this.markers[id]);
                 if (this.territories[id]) this.map.removeLayer(this.territories[id]);
-                delete this.markers[id];
-                delete this.territories[id];
+                delete this.markers[id]; delete this.territories[id];
             }
         }
 
@@ -116,11 +153,9 @@ class GameController {
             if (!p.lat || p.status === 'offline' || p.health <= 0) continue;
 
             const isMe = (NetCode.currentPlayer && NetCode.currentPlayer.id === id);
-            const myAlliance = NetCode.currentPlayer ? NetCode.currentPlayer.alliance : "مستقل";
-            const isAlly = (!isMe && myAlliance !== "مستقل" && p.alliance === myAlliance);
 
-            // 1. رسم دوائر النفوذ
-            const currentRadius = p.territoryRange + (p.score * 10);
+            // 🚩 نظام الاحتلال واللون المميز (كل لاعب له لونه الخاص)
+            const currentRadius = p.territoryRange || 50000; 
             if (this.territories[id]) {
                 this.territories[id].setLatLng([p.lat, p.lng]);
                 this.territories[id].setRadius(currentRadius);
@@ -128,23 +163,23 @@ class GameController {
                 this.territories[id] = L.circle([p.lat, p.lng], {
                     color: p.allianceColor,
                     fillColor: p.allianceColor,
-                    fillOpacity: isMe ? 0.15 : 0.05, 
+                    fillOpacity: isMe ? 0.3 : 0.1, // لونك بيكون أتقل وواضح
                     weight: isMe ? 2 : 1,
                     radius: currentRadius
                 }).addTo(this.map);
             }
 
-            // 2. تصميم الأيقونة المتطورة 
-            let iconGlow = p.health > 50 ? 'var(--neon-green)' : (p.health > 20 ? 'var(--neon-gold)' : 'var(--neon-red)');
-            if (p.health > 100) iconGlow = '#fff'; 
-            
-            // إضافة أنيميشن "نبض" لقاعدتك إنت بس عشان تكون مميزة
+            let iconGlow = p.health > 50 ? 'var(--neon-green)' : 'var(--neon-red)';
             const pulseClass = isMe ? 'pulse-me' : '';
 
+            // عرض مستوى الجيش فوق العدو
+            const armyBadge = p.armyLevel ? `<div style="position:absolute; top:-15px; background:#000; border:1px solid ${p.allianceColor}; font-size:10px; padding:2px; border-radius:4px;">Lv.${p.armyLevel}</div>` : '';
+
             const markerHtml = `
-                <div class="tactical-marker ${isMe ? 'is-me' : ''} ${isAlly ? 'is-ally' : ''} ${pulseClass}" 
-                     style="border-color: ${p.allianceColor}; box-shadow: 0 0 15px ${iconGlow}; background: rgba(0,0,0,0.8); border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 14px;">
-                    ${isMe ? '🛡️' : (isAlly ? '🤝' : '🎯')}
+                <div class="tactical-marker ${isMe ? 'is-me' : ''} ${pulseClass}" 
+                     style="border-color: ${p.allianceColor}; box-shadow: 0 0 15px ${iconGlow}; background: rgba(0,0,0,0.8); border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 14px; position:relative;">
+                    ${armyBadge}
+                    ${isMe ? '🛡️' : '🎯'}
                 </div>
             `;
             const customIcon = L.divIcon({ className: 'clear-icon', html: markerHtml, iconSize: [30, 30], iconAnchor: [15, 15] });
@@ -154,104 +189,55 @@ class GameController {
                 this.markers[id].setIcon(customIcon);
             } else {
                 this.markers[id] = L.marker([p.lat, p.lng], { icon: customIcon }).addTo(this.map);
-                this.markers[id].on('click', () => this.handleTargetSelection(p, isMe, isAlly));
+                this.markers[id].on('click', () => this.handleTargetSelection(p, isMe, false));
             }
         }
     }
 
-    // ==========================================
-    // 5. التفاعلات الميكانيكية (Mechanics Logic) ⚙️
-    // ==========================================
     handleMapClick(latlng) {
         if (this.isDeploying) {
             NetCode.deployBase(latlng.lat, latlng.lng);
             this.isDeploying = false;
             document.getElementById('map-wrapper').style.cursor = 'default';
-            
-            // 🎥 الكاميرا السينمائية: زووم ناعم على قاعدتك بعد نشرها
-            this.map.flyTo(latlng, 6, {
-                animate: true,
-                duration: 1.5 // ثانية ونصف من الطيران السينمائي
-            });
-            
-            const sfx = document.getElementById('sfx-ui-click');
-            if(sfx) { sfx.currentTime = 0; sfx.play().catch(()=>{}); }
-            
+            this.map.flyTo(latlng, 6, { animate: true, duration: 1.5 });
             Swal.fire({ title: 'تمركز ناجح!', icon: 'success', toast: true, position: 'top', timer: 1500, showConfirmButton: false });
         }
     }
 
     async handleTargetSelection(targetPlayer, isMe, isAlly) {
-        // 🛡️ حماية: منع فتح شاشة الهجوم أثناء محاولة اللاعب نشر قاعدته
         if (this.isDeploying) return;
-
-        if (isMe) {
-            Swal.fire('قاعدتك المركزية', `الدرع: ${targetPlayer.shields} | الموارد: ${targetPlayer.coins}`, 'info');
-            return;
-        }
-
-        if (isAlly) {
-            Swal.fire(`حليف: ${targetPlayer.name}`, 'لا يمكنك قصف حلفائك!', 'info');
-            return;
-        }
+        if (isMe) return Swal.fire('قاعدتك المركزية', `الجيش: مستوى ${targetPlayer.armyLevel||1} | الموارد: ${targetPlayer.coins}`, 'info');
 
         const { value: action } = await Swal.fire({
             title: `استهداف: ${targetPlayer.name}`,
             html: `
-                <div style="font-size: 0.9rem; margin-bottom: 15px; color: var(--neon-gold);">
-                    النفوذ: ${Math.round(targetPlayer.territoryRange/1000)}كم | التحالف: ${targetPlayer.alliance}
+                <div style="font-size: 0.9rem; margin-bottom: 15px; color: ${targetPlayer.allianceColor};">
+                    جيش العدو: مستوى ${targetPlayer.armyLevel || 1} | النفوذ: ${Math.round(targetPlayer.territoryRange/1000)}كم
                 </div>
                 <div style="display: flex; gap: 10px; justify-content: center;">
-                    <button id="atk-basic" class="cyber-button" style="border-color: var(--neon-blue);">🚀 صاروخ (50)</button>
-                    <button id="atk-nuke" class="cyber-button" style="border-color: var(--neon-red);">☢️ نووي (300)</button>
+                    <button id="atk-basic" class="cyber-button" style="border-color: var(--neon-blue);">🚀 هجوم صاروخي</button>
                 </div>
             `,
-            background: 'var(--panel-bg)', color: '#fff',
-            showConfirmButton: false, showCloseButton: true,
+            background: 'var(--bg-glass)', color: '#fff', showConfirmButton: false, showCloseButton: true,
             didOpen: () => {
-                document.getElementById('atk-basic').addEventListener('click', () => {
-                    Swal.close(); this.confirmAttack(targetPlayer, 'basicRocket');
-                });
-                document.getElementById('atk-nuke').addEventListener('click', () => {
-                    Swal.close(); this.confirmAttack(targetPlayer, 'nuke');
-                });
+                document.getElementById('atk-basic').addEventListener('click', () => { Swal.close(); this.confirmAttack(targetPlayer, 'basicRocket'); });
             }
         });
     }
 
     confirmAttack(targetPlayer, weaponKey) {
-        // حماية: التأكد من أن القائد حي يرزق قبل إعطاء أمر الهجوم
-        if (NetCode.currentPlayer.health <= 0) {
-            return Swal.fire('قاعدة مدمرة', 'أنت ميت! قم بإصلاح قاعدتك أولاً لتتمكن من الهجوم.', 'error');
-        }
-
-        const weapon = MARKET.weapons[weaponKey];
-        if (NetCode.currentPlayer.coins < weapon.cost) {
-            return Swal.fire('فشل التذخير', `مواردك لا تكفي لاستخدام ${weapon.name}!`, 'error');
-        }
-        
+        if (NetCode.currentPlayer.health <= 0) return Swal.fire('خطأ', 'أنت ميت!', 'error');
         NetCode.launchStrike(targetPlayer.id, weaponKey);
     }
 
     routeMissile(attackerId, targetId, weaponType) {
         const attacker = this.playersData[attackerId];
         const target = this.playersData[targetId];
-
         if (attacker && target && attacker.lat && target.lat) {
-            const startLatLng = L.latLng(attacker.lat, attacker.lng);
-            const endLatLng = L.latLng(target.lat, target.lng);
-            
-            const sfx = document.getElementById('sfx-launch');
-            if(sfx) { sfx.currentTime = 0; sfx.play().catch(()=>{}); }
-
-            // تسليم المهمة لمحرك الجرافيكس لعمل الأنيميشن الخارق
-            VFX.animateFlight(startLatLng, endLatLng, weaponType);
+            VFX.animateFlight(L.latLng(attacker.lat, attacker.lng), L.latLng(target.lat, target.lng), weaponType);
         }
     }
 }
 
-// 🚀 نقطة الانطلاق الرسمية للعبة 
 const GameManager = new GameController();
-document.addEventListener('DOMContentLoaded', () => {
-    GameManager.boot();
-});
+document.addEventListener('DOMContentLoaded', () => GameManager.boot());

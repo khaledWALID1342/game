@@ -1,14 +1,11 @@
 <!DOCTYPE html>
 <html lang="ar">
-
 <head>
 
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>World Rockets Game</title>
-
-<meta name="viewport"
-content="width=device-width, initial-scale=1.0">
 
 <link rel="stylesheet"
 href="https://unpkg.com/leaflet/dist/leaflet.css"/>
@@ -16,68 +13,221 @@ href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 <style>
 
 body{
-
 margin:0;
 background:#0b0f1a;
 color:white;
 font-family:Arial;
-text-align:center;
-
-}
-
-#map{
-
-height:80vh;
-
 }
 
 #topbar{
-
 background:black;
 padding:10px;
-
+display:flex;
+justify-content:space-between;
 }
 
 button{
-
-padding:15px;
-font-size:18px;
 background:red;
 color:white;
 border:none;
-margin:10px;
+padding:10px;
+margin:3px;
+}
 
+#map{
+height:60vh;
+}
+
+#panel{
+background:#111;
+padding:10px;
+}
+
+#leaderboard{
+background:#000;
+padding:10px;
+height:150px;
+overflow:auto;
 }
 
 </style>
 
 </head>
-
 <body>
 
 <div id="topbar">
 
-<h2>🌍 World Rockets Game</h2>
+<div>
+🌍 World Rockets Game
+</div>
 
-<button onclick="addPlayer()">
+<div>
 
-➕ أضف نفسك
+<button onclick="login()">👤 دخول</button>
 
-</button>
+<button onclick="addPlayer()">📍 موقعي</button>
+
+<button onclick="launchRocket()">🚀 صاروخ</button>
+
+<button onclick="earnCoins()">💰 Coins</button>
+
+</div>
 
 </div>
 
 <div id="map"></div>
+
+<div id="panel">
+
+👤 Name:
+<span id="name">-</span>
+
+|
+
+⭐ Score:
+<span id="score">0</span>
+
+|
+
+🚀 Rockets:
+<span id="rockets">0</span>
+
+|
+
+💰 Coins:
+<span id="coins">0</span>
+
+</div>
+
+<div id="leaderboard">
+
+🏆 Leaderboard
+
+<div id="list"></div>
+
+</div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <script>
 
 //////////////////////////////////////////////////////
-// إنشاء الخريطة
+// DATABASE
 //////////////////////////////////////////////////////
 
-var map = L.map('map').setView([20,0],2);
+var DB = {
+
+players:[],
+
+current:null
+
+};
+
+//////////////////////////////////////////////////////
+// SAVE
+//////////////////////////////////////////////////////
+
+function save(){
+
+localStorage.setItem(
+
+"game",
+
+JSON.stringify(DB)
+
+);
+
+}
+
+//////////////////////////////////////////////////////
+// LOAD
+//////////////////////////////////////////////////////
+
+function load(){
+
+var data = localStorage.getItem("game");
+
+if(data){
+
+DB = JSON.parse(data);
+
+}
+
+}
+
+//////////////////////////////////////////////////////
+// LOGIN
+//////////////////////////////////////////////////////
+
+function login(){
+
+var name = prompt("اسمك");
+
+if(!name)return;
+
+var player = DB.players.find(
+
+p=>p.name==name
+
+);
+
+if(player){
+
+DB.current = player;
+
+}else{
+
+player = {
+
+id:Date.now(),
+
+name:name,
+
+lat:0,
+
+lng:0,
+
+score:100,
+
+coins:50,
+
+rockets:3
+
+};
+
+DB.players.push(player);
+
+DB.current=player;
+
+}
+
+save();
+
+updateUI();
+
+draw();
+
+}
+
+//////////////////////////////////////////////////////
+// MAP
+//////////////////////////////////////////////////////
+
+var map = L.map(
+
+'map',
+
+{
+
+zoomControl:false,
+
+touchZoom:true,
+
+scrollWheelZoom:false
+
+}
+
+).setView([20,0],2);
 
 L.tileLayer(
 
@@ -86,88 +236,198 @@ L.tileLayer(
 ).addTo(map);
 
 //////////////////////////////////////////////////////
-// تحميل اللاعبين من التخزين
+// DRAW PLAYERS
 //////////////////////////////////////////////////////
 
-var players = JSON.parse(
-localStorage.getItem("players")
-) || [];
+function draw(){
 
-//////////////////////////////////////////////////////
-// عرض اللاعبين
-//////////////////////////////////////////////////////
+map.eachLayer(function(layer){
 
-players.forEach(function(player){
+if(layer instanceof L.Marker)
 
-L.marker([
-
-player.lat,
-
-player.lng
-
-]).addTo(map)
-
-.bindPopup(
-
-"👤 " + player.name
-
-);
+map.removeLayer(layer);
 
 });
 
+DB.players.forEach(function(p){
+
+if(!p.lat)return;
+
+var marker = L.marker([p.lat,p.lng])
+
+.addTo(map)
+
+.bindPopup(
+
+"👤 "+p.name+
+
+"<br>⭐ "+p.score+
+
+"<br>🚀 "+p.rockets
+
+);
+
+marker.on("click",function(){
+
+target=p;
+
+});
+
+});
+
+updateLeaderboard();
+
+}
+
 //////////////////////////////////////////////////////
-// إضافة لاعب جديد
+// ADD LOCATION
 //////////////////////////////////////////////////////
 
 function addPlayer(){
 
-var name = prompt("اكتب اسمك");
+if(!DB.current){
 
-if(!name) return;
+alert("سجل دخول");
 
-map.once("click", function(e){
+return;
 
-var lat = e.latlng.lat;
+}
 
-var lng = e.latlng.lng;
+alert("اضغط على موقعك");
 
-var player = {
+map.once("click",function(e){
 
-name:name,
+DB.current.lat=e.latlng.lat;
 
-lat:lat,
+DB.current.lng=e.latlng.lng;
 
-lng:lng,
+save();
 
-score:0,
-
-rockets:0
-
-};
-
-players.push(player);
-
-localStorage.setItem(
-
-"players",
-
-JSON.stringify(players)
-
-);
-
-L.marker([lat,lng])
-
-.addTo(map)
-
-.bindPopup("👤 " + name);
-
-alert("تم إضافتك بنجاح");
+draw();
 
 });
 
-alert("اضغط على مكان في الخريطة");
+}
+
+//////////////////////////////////////////////////////
+// COINS
+//////////////////////////////////////////////////////
+
+function earnCoins(){
+
+if(!DB.current)return;
+
+DB.current.coins+=10;
+
+save();
+
+updateUI();
 
 }
+
+//////////////////////////////////////////////////////
+// ROCKET
+//////////////////////////////////////////////////////
+
+var target=null;
+
+function launchRocket(){
+
+if(!target){
+
+alert("اختر لاعب");
+
+return;
+
+}
+
+if(DB.current.rockets<=0){
+
+alert("لا يوجد صواريخ");
+
+return;
+
+}
+
+DB.current.rockets--;
+
+target.score-=20;
+
+DB.current.score+=20;
+
+save();
+
+draw();
+
+updateUI();
+
+}
+
+//////////////////////////////////////////////////////
+// LEADERBOARD
+//////////////////////////////////////////////////////
+
+function updateLeaderboard(){
+
+var list = document.getElementById("list");
+
+list.innerHTML="";
+
+DB.players
+
+.sort((a,b)=>b.score-a.score)
+
+.forEach(function(p){
+
+list.innerHTML+=
+
+"<div>"
+
++p.name+
+
+" ⭐ "+p.score+
+
+"</div>";
+
+});
+
+}
+
+//////////////////////////////////////////////////////
+// UI
+//////////////////////////////////////////////////////
+
+function updateUI(){
+
+if(!DB.current)return;
+
+document.getElementById("name")
+
+.innerText=DB.current.name;
+
+document.getElementById("score")
+
+.innerText=DB.current.score;
+
+document.getElementById("coins")
+
+.innerText=DB.current.coins;
+
+document.getElementById("rockets")
+
+.innerText=DB.current.rockets;
+
+}
+
+//////////////////////////////////////////////////////
+// INIT
+//////////////////////////////////////////////////////
+
+load();
+
+draw();
+
+updateUI();
 
 //////////////////////////////////////////////////////
 

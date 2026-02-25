@@ -1,391 +1,271 @@
 /* ==========================================================================
-   1. CSS Variables (متغيرات الألوان والمسافات الاحترافية)
+   🚀 WORLD ROCKETS - THE ULTIMATE CYBERPUNK UI ENGINE (V7.5)
    ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. المتغيرات الاحترافية (Design System Variables)
+   -------------------------------------------------------------------------- */
 :root {
-    /* الألوان الأساسية - ستايل سايبر بانك/فضاء */
-    --bg-dark: #070b14;
-    --bg-panel: rgba(15, 23, 42, 0.75);
+    /* الألوان الأساسية (Neon Cyberpunk Palette) */
+    --bg-dark: #050505;
     --primary-glow: #ff4757;
-    --secondary-glow: #3742fa;
-    --accent-gold: #ffa502;
-    --health-green: #2ed573;
-    --shield-blue: #70a1ff;
+    --secondary-glow: #00d2d3;
+    --accent-gold: #feca57;
+    --health-green: #10ac84;
+    --shield-blue: #3742fa;
     --text-main: #f1f2f6;
     --text-muted: #a4b0be;
 
-    /* تأثير الزجاج (Glassmorphism) */
-    --glass-border: 1px solid rgba(255, 255, 255, 0.1);
-    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
+    /* تأثيرات الزجاج (Advanced Glassmorphism) */
+    --bg-panel: rgba(10, 15, 25, 0.75);
+    --glass-border: 1px solid rgba(0, 210, 211, 0.2);
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
     --glass-blur: blur(12px);
 
-    /* الانتقالات (Transitions) */
-    --transition-fast: 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    /* الانتقالات (Smooth Physics) */
+    --transition-fast: 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
     --transition-smooth: 0.4s ease-in-out;
 }
 
-/* ==========================================================================
-   2. Base & Reset (تصفير المسافات وتأسيس الخطوط)
-   ========================================================================== */
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    font-family: 'Cairo', sans-serif;
-    user-select: none; /* منع تحديد النص جوا اللعبة */
-}
+/* --------------------------------------------------------------------------
+   2. التأسيس والضبط العام (Reset & Base)
+   -------------------------------------------------------------------------- */
+* { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
 
 body {
     background-color: var(--bg-dark);
     color: var(--text-main);
-    overflow: hidden; /* منع السكرول عشان اللعبة تاخد الشاشة كلها */
-    height: 100vh;
-    width: 100vw;
-    display: flex;
-    flex-direction: column;
+    font-family: 'Cairo', 'Orbitron', sans-serif;
+    overflow: hidden; /* يمنع الشاشة من التحرك كصفحة ويب */
+    width: 100vw; height: 100vh;
+    touch-action: none; /* مهم جداً لتشغيل الخريطة بسلاسة على الموبايل */
 }
 
-/* Custom Scrollbar (سكرول بار احترافي) */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); }
-::-webkit-scrollbar-thumb { background: var(--primary-glow); border-radius: 10px; }
+/* سكرول بار مخصص للقوائم الجانبية */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.3); }
+::-webkit-scrollbar-thumb { background: var(--secondary-glow); border-radius: 10px; }
 
-/* ==========================================================================
-   3. Loading Screen (شاشة التحميل الاحترافية)
-   ========================================================================== */
-#loading-screen {
-    position: fixed;
-    inset: 0;
-    background: radial-gradient(circle at center, #1e272e 0%, #000000 100%);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-    transition: opacity var(--transition-smooth), visibility var(--transition-smooth);
+/* --------------------------------------------------------------------------
+   3. الخريطة والمؤثرات البيئية (Map & World Layer)
+   -------------------------------------------------------------------------- */
+#map-wrapper { position: fixed; inset: 0; z-index: 1; background: var(--bg-dark); }
+#map { width: 100%; height: 100%; filter: contrast(1.15) saturate(1.2) brightness(0.85); }
+
+/* الرادار الذكي (لا يمنع اللمس) */
+#radar-overlay {
+    position: fixed; inset: 0; z-index: 5;
+    pointer-events: none !important; /* السطر السحري لمنع تعليق الخريطة */
+    opacity: 0; transition: opacity 0.5s;
+    background: repeating-radial-gradient(rgba(16, 172, 132, 0.05), transparent 60px);
+}
+#radar-overlay.radar-active { opacity: 1; }
+#radar-overlay.radar-active::before {
+    content: ''; position: absolute; top: 50%; left: 50%; width: 200vw; height: 200vh;
+    transform: translate(-50%, -50%);
+    background: conic-gradient(from 0deg, transparent 75%, rgba(16, 172, 132, 0.4) 100%);
+    border-radius: 50%; animation: radar-sweep 2.5s linear infinite;
 }
 
-#loading-screen:not(.active) {
-    opacity: 0;
-    visibility: hidden;
+/* --------------------------------------------------------------------------
+   4. الواجهة التكتيكية المركزية (Main HUD Engine)
+   -------------------------------------------------------------------------- */
+#main-hud {
+    position: fixed; inset: 0; z-index: 100;
+    pointer-events: none; /* الطبقة شفافة للمس... */
+    display: flex; flex-direction: column; justify-content: space-between;
+}
+#main-hud.active-hud > * { pointer-events: auto; } /* ...لكن الأزرار تقبل اللمس */
+
+/* الشريط العلوي للعدادات */
+.hud-top {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: 10px 15px; width: 100%;
+    background: linear-gradient(180deg, rgba(0,0,0,0.95), transparent);
+    gap: 10px; flex-wrap: wrap;
 }
 
-.loader-content {
-    text-align: center;
-    animation: pulseGlow 2s infinite alternate;
+.stats-zone { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; width: 100%; }
+.stat-box {
+    background: var(--bg-panel); border: var(--glass-border);
+    padding: 6px 12px; border-radius: 20px;
+    display: flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 700;
+    box-shadow: var(--glass-shadow); backdrop-filter: var(--glass-blur);
 }
+.stat-box.health { color: var(--health-green); text-shadow: 0 0 8px var(--health-green); box-shadow: inset 0 0 8px rgba(16, 172, 132, 0.2); }
+.stat-box.energy { color: var(--secondary-glow); text-shadow: 0 0 8px var(--secondary-glow); }
+.stat-box.coins { color: var(--accent-gold); text-shadow: 0 0 8px var(--accent-gold); }
+.stat-box.ammo { color: var(--primary-glow); text-shadow: 0 0 8px var(--primary-glow); }
 
-.loader-content h2 {
-    margin-top: 20px;
-    font-size: 1.5rem;
-    color: var(--text-main);
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
-    letter-spacing: 2px;
+/* --------------------------------------------------------------------------
+   5. القوائم الجانبية (AI Commander & Leaderboard)
+   -------------------------------------------------------------------------- */
+.floating-panel {
+    background: var(--bg-panel); border: var(--glass-border);
+    padding: 12px; border-radius: 10px; width: 180px;
+    box-shadow: var(--glass-shadow); backdrop-filter: var(--glass-blur);
+    pointer-events: auto; transition: var(--transition-smooth);
 }
+.left-panel { position: absolute; left: 10px; top: 75px; border-left: 3px solid var(--secondary-glow); }
+.right-panel { position: absolute; right: 10px; top: 75px; border-right: 3px solid var(--accent-gold); }
 
-.progress-bar {
-    width: 300px;
-    height: 6px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-    margin: 20px auto 0;
-    overflow: hidden;
-    position: relative;
+.panel-header {
+    font-size: 0.8rem; color: var(--secondary-glow); font-weight: 800;
+    border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; margin-bottom: 8px;
+    display: flex; justify-content: space-between;
 }
+.ai-chat-box { height: 75px; overflow-y: auto; font-size: 0.75rem; color: var(--text-main); margin-bottom: 8px; }
+.ai-msg { margin-bottom: 5px; border-right: 2px solid var(--health-green); padding-right: 6px; font-family: 'Cairo'; line-height: 1.3; }
 
-#loading-progress {
-    width: 0%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, var(--primary-glow), transparent);
-    box-shadow: 0 0 15px var(--primary-glow);
-    animation: loadingBar 2s infinite linear;
-}
-
-/* ==========================================================================
-   4. Header & HUD (الشريط العلوي وتأثير الزجاج)
-   ========================================================================== */
-#game-header {
-    background: var(--bg-panel);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border-bottom: var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    padding: 10px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    z-index: 1000;
-}
-
-.logo {
-    font-size: 1.4rem;
-    font-weight: 900;
-    text-transform: uppercase;
-    background: linear-gradient(45deg, var(--primary-glow), var(--accent-gold));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    filter: drop-shadow(0 0 8px rgba(255, 71, 87, 0.4));
+/* أزرار القوائم الداخلية */
+.ai-btn, .tab-btn, .cyber-button.small {
+    width: 100%; padding: 8px; margin-top: 5px; cursor: pointer;
+    background: rgba(0, 210, 211, 0.05); border: 1px solid var(--secondary-glow);
+    color: var(--text-main); border-radius: 6px; font-size: 0.75rem; font-weight: bold;
     transition: var(--transition-fast);
 }
+.ai-btn:hover, .tab-btn:hover { background: rgba(0, 210, 211, 0.2); box-shadow: 0 0 10px rgba(0, 210, 211, 0.4); }
+.ai-btn:active { transform: scale(0.95); background: var(--secondary-glow); color: #000; }
+.tab-btn.active { background: var(--accent-gold); border-color: var(--accent-gold); color: #000; }
 
-/* عدادات اللاعب (Stats Badges) */
-.player-stats-container {
-    display: flex;
-    gap: 15px;
+/* --------------------------------------------------------------------------
+   6. شريط التحكم التكتيكي السفلي (Action Bar)
+   -------------------------------------------------------------------------- */
+#action-bar {
+    background: var(--bg-panel); border-top: var(--glass-border);
+    padding: 12px 5px; width: 100%; backdrop-filter: var(--glass-blur);
+    animation: slideUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+.nav-container { display: flex; justify-content: space-around; align-items: flex-end; }
+
+.action-btn {
+    background: transparent; border: none; outline: none; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    color: var(--text-muted); font-size: 0.75rem; font-weight: 700;
+    transition: var(--transition-fast); position: relative;
+}
+.action-btn i {
+    font-size: 1.4rem; background: rgba(255,255,255,0.03); padding: 12px;
+    border-radius: 12px; border: 1px solid transparent; transition: var(--transition-fast);
+}
+.action-btn:hover i { color: #fff; border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.08); }
+.action-btn:active i { transform: scale(0.85); background: var(--secondary-glow); border-color: var(--secondary-glow); color: #000; box-shadow: 0 0 20px var(--secondary-glow); }
+
+/* زر التمركز (Locate) - النبض العسكري */
+.primary-action { color: var(--primary-glow); transform: translateY(-15px); }
+.primary-action i {
+    background: rgba(255, 71, 87, 0.1); border-color: var(--primary-glow);
+    font-size: 1.8rem; padding: 16px; border-radius: 50%;
+    animation: pulse-red 2s infinite;
+}
+.primary-action:active i { transform: scale(0.9); background: var(--primary-glow); color: #fff; box-shadow: 0 0 30px var(--primary-glow); animation: none; }
+
+/* --------------------------------------------------------------------------
+   7. شاشة الدخول والتشفير (Boot & Auth)
+   -------------------------------------------------------------------------- */
+.overlay-fullscreen {
+    position: fixed; inset: 0; z-index: 9999;
+    background: radial-gradient(circle at center, #111827 0%, #000 100%);
+    display: flex; justify-content: center; align-items: center;
+    transition: opacity 0.8s ease;
+}
+.overlay-fullscreen.hidden { opacity: 0; pointer-events: none; }
+.cyber-container { text-align: center; width: 100%; max-width: 450px; padding: 20px; }
+
+/* تأثير الجليتش الاحترافي */
+.glitch-text {
+    font-family: var(--font-tech); font-size: 2.8rem; font-weight: 900;
+    color: #fff; text-shadow: 0 0 10px var(--primary-glow);
+    margin-bottom: 25px; position: relative;
+}
+.glitch-text::before, .glitch-text::after {
+    content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+}
+.glitch-text::before { left: 2px; text-shadow: -2px 0 var(--secondary-glow); animation: glitch-anim 2s infinite linear alternate-reverse; }
+.glitch-text::after { left: -2px; text-shadow: -2px 0 var(--primary-glow); animation: glitch-anim-2 3s infinite linear alternate-reverse; }
+
+.cyber-panel { background: var(--bg-panel); border: var(--glass-border); padding: 25px; border-radius: 12px; box-shadow: var(--glass-shadow); backdrop-filter: var(--glass-blur); }
+.server-list { margin-bottom: 20px; }
+.server-card { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); color: var(--text-muted); cursor: pointer; transition: 0.3s; }
+.server-card:hover { background: rgba(255,255,255,0.05); color: #fff; }
+.server-card input:checked + .server-info { color: var(--secondary-glow); font-weight: bold; }
+
+.cyber-input {
+    width: 100%; padding: 14px; margin-bottom: 12px;
+    background: rgba(0,0,0,0.6); border: 1px solid var(--secondary-glow);
+    color: var(--secondary-glow); border-radius: 6px; outline: none;
+    text-align: center; font-family: var(--font-tech); font-size: 1rem;
+}
+.cyber-input:focus { box-shadow: 0 0 15px rgba(0, 210, 211, 0.3); }
+
+.cyber-button.primary {
+    width: 100%; padding: 15px; background: rgba(0, 210, 211, 0.1);
+    border: 1px solid var(--secondary-glow); color: var(--secondary-glow);
+    font-weight: 900; font-size: 1.1rem; border-radius: 6px; cursor: pointer; transition: 0.3s;
+}
+.cyber-button.primary:hover { background: rgba(0, 210, 211, 0.2); box-shadow: 0 0 15px rgba(0, 210, 211, 0.5); }
+.cyber-button.primary:active { background: var(--secondary-glow); color: #000; transform: scale(0.98); }
+
+/* --------------------------------------------------------------------------
+   8. إشعارات الرادار (Kill Feed)
+   -------------------------------------------------------------------------- */
+.combat-feed-container {
+    position: absolute; top: 120px; left: 50%; transform: translateX(-50%);
+    z-index: 3000; width: 90%; max-width: 320px; pointer-events: none;
+}
+.combat-msg {
+    background: rgba(0,0,0,0.85); border: 1px solid var(--primary-glow);
+    padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold;
+    margin-bottom: 6px; text-align: center; color: #fff;
+    box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);
+    animation: slideDown 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.stat-badge {
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    padding: 6px 15px;
-    border-radius: 20px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: transform var(--transition-fast);
+/* --------------------------------------------------------------------------
+   9. الرسوم المتحركة والفيزياء (Keyframes Physics)
+   -------------------------------------------------------------------------- */
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes radar-sweep { 100% { transform: translate(-50%, -50%) rotate(360deg); } }
+@keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.6); } 70% { box-shadow: 0 0 0 15px rgba(255, 71, 87, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0); } }
+
+/* أنيميشن الماركر الخاص بك على الخريطة */
+@keyframes marker-pulse {
+    0% { transform: scale(1); box-shadow: 0 0 10px var(--health-green); }
+    50% { transform: scale(1.15); box-shadow: 0 0 25px var(--health-green); }
+    100% { transform: scale(1); box-shadow: 0 0 10px var(--health-green); }
 }
+.pulse-me { animation: marker-pulse 2s infinite ease-in-out; border: 2px solid #fff !important; }
 
-.stat-badge:hover { transform: translateY(-2px); }
+/* أنيميشن الانفجارات ورجة الكاميرا */
+.shake-light { animation: shake-map 0.3s cubic-bezier(.36,.07,.19,.97) both; }
+.shake-heavy { animation: shake-map-heavy 0.8s cubic-bezier(.36,.07,.19,.97) both; filter: contrast(1.5) saturate(1.5); }
+@keyframes shake-map { 0%, 100% { transform: translate3d(0, 0, 0); } 25% { transform: translate3d(-5px, 5px, 0); } 50% { transform: translate3d(5px, -5px, 0); } }
+@keyframes shake-map-heavy { 0%, 100% { transform: translate3d(0, 0, 0); } 10%, 30%, 50%, 70%, 90% { transform: translate3d(-15px, 15px, 0) rotate(-1deg); } 20%, 40%, 60%, 80% { transform: translate3d(15px, -15px, 0) rotate(1deg); } }
 
-.stat-badge.health { color: var(--health-green); text-shadow: 0 0 8px var(--health-green); }
-.stat-badge.shield { color: var(--shield-blue); text-shadow: 0 0 8px var(--shield-blue); }
-.stat-badge.coins { color: var(--accent-gold); text-shadow: 0 0 8px var(--accent-gold); }
-.stat-badge.rockets { color: var(--primary-glow); text-shadow: 0 0 8px var(--primary-glow); }
+/* تأثير الجليتش */
+@keyframes glitch-anim { 0% { clip-path: inset(20% 0 80% 0); } 20% { clip-path: inset(60% 0 10% 0); } 40% { clip-path: inset(40% 0 50% 0); } 60% { clip-path: inset(80% 0 5% 0); } 80% { clip-path: inset(10% 0 70% 0); } 100% { clip-path: inset(30% 0 40% 0); } }
+@keyframes glitch-anim-2 { 0% { clip-path: inset(10% 0 60% 0); } 20% { clip-path: inset(30% 0 20% 0); } 40% { clip-path: inset(70% 0 10% 0); } 60% { clip-path: inset(20% 0 50% 0); } 80% { clip-path: inset(50% 0 30% 0); } 100% { clip-path: inset(5% 0 80% 0); } }
 
-/* أزرار الهيدر */
-.btn-glow {
-    background: transparent;
-    color: white;
-    border: 1px solid var(--secondary-glow);
-    padding: 8px 20px;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
-    box-shadow: inset 0 0 10px rgba(55, 66, 250, 0.2), 0 0 15px rgba(55, 66, 250, 0.2);
-    transition: var(--transition-fast);
-}
-
-.btn-glow:hover {
-    background: var(--secondary-glow);
-    box-shadow: 0 0 20px var(--secondary-glow);
-}
-
-.btn-icon {
-    background: rgba(255, 255, 255, 0.1);
-    border: none;
-    color: white;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    cursor: pointer;
-    transition: var(--transition-fast);
-}
-
-.btn-icon:hover { background: rgba(255, 255, 255, 0.2); transform: rotate(90deg); }
-
-/* ==========================================================================
-   5. Game Area & Map (منطقة اللعب والخريطة)
-   ========================================================================== */
-#game-container {
-    flex-grow: 1;
-    position: relative;
-    display: flex;
-}
-
-#map {
-    width: 100%;
-    height: 100%;
-    z-index: 1;
-    /* فلتر يدي الخريطة طابع مظلم وسينمائي */
-    filter: contrast(1.1) saturate(1.2); 
-}
-
-/* ==========================================================================
-   6. Kill Feed (رادار الإشعارات الحي)
-   ========================================================================== */
-#kill-feed {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    width: 250px;
-    z-index: 1000;
-    pointer-events: none; /* عشان ميمنعش الضغط على الخريطة تحته */
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.kill-msg {
-    background: linear-gradient(90deg, rgba(0,0,0,0.8) 0%, rgba(20,20,20,0) 100%);
-    border-right: 3px solid var(--primary-glow);
-    padding: 8px 12px;
-    border-radius: 4px;
-    font-size: 0.85rem;
-    animation: slideInRight 0.3s forwards, fadeOut 0.5s 4s forwards; /* يختفي بعد 4 ثواني */
-}
-
-.kill-msg .killer { color: var(--accent-gold); font-weight: bold; }
-.kill-msg .victim { color: var(--text-muted); text-decoration: line-through; }
-
-/* ==========================================================================
-   7. Floating Controls (أزرار التحكم العائمة)
-   ========================================================================== */
-.floating-controls {
-    position: absolute;
-    bottom: 30px;
-    left: 20px;
-    z-index: 1000;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-.btn-float {
-    width: 55px;
-    height: 55px;
-    border-radius: 50%;
-    border: none;
-    color: white;
-    font-size: 1.3rem;
-    cursor: pointer;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-    transition: all var(--transition-fast);
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.btn-float::after {
-    content: '';
-    position: absolute;
-    inset: -3px;
-    border-radius: 50%;
-    z-index: -1;
-    transition: var(--transition-fast);
-}
-
-.btn-float:hover { transform: scale(1.1) translateY(-5px); }
-.btn-float:active { transform: scale(0.95); }
-
-.btn-primary { background: linear-gradient(135deg, #3742fa, #5f27cd); }
-.btn-primary:hover::after { box-shadow: 0 0 20px #3742fa; }
-
-.btn-success { background: linear-gradient(135deg, #2ed573, #1e90ff); }
-.btn-success:hover::after { box-shadow: 0 0 20px #2ed573; }
-
-.btn-warning { background: linear-gradient(135deg, #ffa502, #ff4757); }
-.btn-warning:hover::after { box-shadow: 0 0 20px #ffa502; }
-
-/* ==========================================================================
-   8. Leaderboard Panel (القائمة الجانبية للأبطال)
-   ========================================================================== */
-#leaderboard-panel {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    width: 300px;
-    height: 40vh;
-    background: var(--bg-panel);
-    backdrop-filter: var(--glass-blur);
-    border: var(--glass-border);
-    border-radius: 15px;
-    box-shadow: var(--glass-shadow);
-    z-index: 1000;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    transition: transform var(--transition-smooth); /* أنيميشن التصغير والتكبير */
-}
-
-/* حالة التصغير (بينزل لتحت وبيسيب العنوان بس) */
-#leaderboard-panel.collapsed {
-    transform: translateY(calc(100% - 54px));
-}
-
-.panel-title {
-    background: rgba(0, 0, 0, 0.3);
-    padding: 15px;
-    text-align: center;
-    font-size: 1.1rem;
-    color: var(--accent-gold);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    cursor: pointer; /* بيغير شكل الماوس لإيد عشان يتعرف إنه زرار */
-    transition: background-color var(--transition-fast);
-}
-
-/* تأثير خفيف لما تقف على العنوان */
-.panel-title:hover {
-    background: rgba(255, 255, 255, 0.05);
-}
-
-.scrollable-list {
-    flex-grow: 1;
-    overflow-y: auto;
-    padding: 10px;
-}
-
-.leaderboard-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    margin-bottom: 8px;
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 8px;
-    transition: var(--transition-fast);
-    border-right: 3px solid transparent;
-}
-
-.leaderboard-item:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-right-color: var(--primary-glow);
-    transform: translateX(-5px);
-}
-
-.rank-1 { border-right-color: gold; box-shadow: inset -10px 0 20px rgba(255, 215, 0, 0.1); }
-.rank-2 { border-right-color: silver; }
-.rank-3 { border-right-color: #cd7f32; }
-
-/* ==========================================================================
-   9. Animations (الأنيميشن المعقد)
-   ========================================================================== */
-@keyframes pulseGlow {
-    0% { transform: scale(1); filter: drop-shadow(0 0 10px var(--primary-glow)); }
-    100% { transform: scale(1.1); filter: drop-shadow(0 0 30px var(--primary-glow)); }
-}
-
-@keyframes loadingBar {
-    0% { width: 0%; transform: translateX(-100%); }
-    50% { width: 50%; }
-    100% { width: 100%; transform: translateX(100%); }
-}
-
-@keyframes slideInRight {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-}
-
-@keyframes fadeOut {
-    from { opacity: 1; }
-    to { opacity: 0; visibility: hidden; }
-}
-
-/* ==========================================================================
-   10. Responsive Design (تظبيط الشاشات للموبايل)
-   ========================================================================== */
+/* --------------------------------------------------------------------------
+   10. التجاوب مع شاشات الموبايل (Mobile First Responsiveness) 📱
+   -------------------------------------------------------------------------- */
 @media (max-width: 768px) {
-    #game-header { flex-direction: column; gap: 10px; padding: 10px; }
-    .player-stats-container { flex-wrap: wrap; justify-content: center; }
-    .stat-badge { font-size: 0.8rem; padding: 4px 10px; }
+    .hud-top { padding: 6px; }
+    .stats-zone { gap: 6px; }
+    .stat-box { padding: 4px 8px; font-size: 0.75rem; }
     
-    #leaderboard-panel {
-        width: 90%;
-        height: 25vh; /* ارتفاع مناسب للموبايل */
-        bottom: 10px;
-        right: 5%;
-    }
-
-    .floating-controls { bottom: 25vh; left: 10px; transform: scale(0.85); }
+    /* تصغير القوائم الجانبية ومنعها من أخذ مساحة الخريطة */
+    .floating-panel { width: 140px; top: 65px; padding: 8px; }
+    .left-panel { left: 5px; }
+    .right-panel { right: 5px; }
     
-    #kill-feed { width: 200px; font-size: 0.75rem; }
+    .panel-header { font-size: 0.7rem; }
+    .ai-chat-box { height: 60px; font-size: 0.65rem; }
+    .ai-btn, .tab-btn { font-size: 0.65rem; padding: 6px; }
+    
+    .glitch-text { font-size: 2rem; }
+    .action-btn i { padding: 10px; font-size: 1.2rem; }
+    .primary-action i { padding: 14px; font-size: 1.5rem; }
 }

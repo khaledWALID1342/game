@@ -37,172 +37,91 @@ const db = getDatabase(app);
 
 
 // ==========================================================================
-// SERVER SYSTEM
+// SERVER SYSTEM (FIXED)
 // ==========================================================================
 
-let currentServer=null;
+// ✅ قراءة السيرفر من auth.js
+let loginData =
+JSON.parse(localStorage.getItem("wr_login"));
 
-const serverSelect =
-document.getElementById("select-server");
+// لو مش مسجل دخول رجع للصفحة الأولى
+if(!loginData){
 
-const overlay =
-document.getElementById("server-overlay");
+window.location.href="index.html";
 
-serverSelect.value =
-localStorage.getItem("wr_server") ||
-"server_1";
+}
 
-document
-.getElementById("btn-auth-main")
-.onclick=()=>{
-
-currentServer=serverSelect.value;
-
-localStorage.setItem(
-"wr_server",
-currentServer
-);
-
-overlay.classList.remove("active");
-
-login();
-
-};
+// تحديد السيرفر
+let currentServer =
+loginData.server || "server_1";
 
 function path(p){
 
-return
-`servers/${currentServer}/${p}`;
+return `servers/${currentServer}/${p}`;
 
 }
 
 
 // ==========================================================================
-// AUTO LOGIN
+// AUTO LOGIN (FIXED)
 // ==========================================================================
 
 let currentPlayer=null;
 
 async function login(){
 
-let saved =
-localStorage.getItem("wr_login");
+let id =
+"player_"+loginData.name;
 
-if(saved){
-
-let data=JSON.parse(saved);
-
-let snap=await get(
-ref(db,path("players/"+data.id))
-);
-
-if(snap.exists()){
-
-if(snap.val().password===data.pass){
-
-currentPlayer=snap.val();
-
-startGame();
-
-return;
-
-}
-
-}
-
-}
-
-register();
-
-}
-
-
-// ==========================================================================
-// REGISTER
-// ==========================================================================
-
-async function register(){
-
-let name=
-prompt("اسم القائد");
-
-if(!name)return;
-
-let pass=
-prompt("كلمة السر");
-
-let id="p_"+name;
-
-let snap=await get(
+let snap =
+await get(
 ref(db,path("players/"+id))
 );
 
 if(snap.exists()){
 
-if(snap.val().password!==pass){
-
-alert("كلمة السر غلط");
-
-return;
-
-}
-
 currentPlayer=snap.val();
-
-}else{
-
-currentPlayer={
-
-id,
-name,
-password:pass,
-
-health:100,
-coins:50,
-rockets:3,
-score:0,
-
-clan:null,
-
-lat:null,
-lng:null,
-
-color:
-"#"+
-Math.floor(
-Math.random()*16777215
-).toString(16)
-
-};
-
-set(
-ref(db,path("players/"+id)),
-currentPlayer
-);
-
-}
-
-localStorage.setItem(
-"wr_login",
-JSON.stringify({
-
-id,
-pass
-
-})
-);
 
 startGame();
 
 }
+else{
+
+alert("Session انتهت");
+
+window.location.href="index.html";
+
+}
+
+}
+
+// تشغيل login مباشرة
+login();
 
 
 // ==========================================================================
-// MAP
+// MAP (FIXED)
 // ==========================================================================
 
-const map=L.map("map")
+const map=L.map("map",{
+
+zoomControl:false,
+
+minZoom:3,
+
+maxZoom:7,
+
+maxBounds:[
+[-85,-180],
+[85,180]
+],
+
+maxBoundsViscosity:1
+
+})
+
 .setView([20,0],3);
+
 
 L.tileLayer(
 
@@ -253,10 +172,16 @@ updateMarkers();
 
 updateLeaderboard();
 
-document.getElementById(
-"online-count"
-).innerText=
+// حماية لو العنصر مش موجود
+let onlineEl =
+document.getElementById("online-count");
+
+if(onlineEl){
+
+onlineEl.innerText=
 Object.keys(players).length;
+
+}
 
 }
 
@@ -281,16 +206,11 @@ let icon=L.divIcon({
 
 html:
 `<div style="
-
 background:${p.color};
-
 width:18px;
 height:18px;
-
 border-radius:50%;
-
 box-shadow:0 0 15px ${p.color}
-
 "></div>`
 
 });
@@ -298,25 +218,18 @@ box-shadow:0 0 15px ${p.color}
 if(!markers[id]){
 
 markers[id]=L.marker(
-
 [p.lat,p.lng],
-
 {icon}
-
 ).addTo(map);
 
 markers[id].onclick=()=>{
-
 playerMenu(p);
-
 };
 
 }
 
 markers[id].setLatLng(
-
 [p.lat,p.lng]
-
 );
 
 
@@ -327,19 +240,12 @@ let radius=p.score*15;
 if(!territories[id]){
 
 territories[id]=L.circle(
-
 [p.lat,p.lng],
-
 {
-
 radius,
-
 color:p.color,
-
 fillOpacity:.15
-
 }
-
 ).addTo(map);
 
 }
@@ -409,11 +315,8 @@ return;
 }
 
 realisticRocket(
-
 [currentPlayer.lat,currentPlayer.lng],
-
 [target.lat,target.lng]
-
 );
 
 }
@@ -426,15 +329,10 @@ realisticRocket(
 function realisticRocket(start,end){
 
 let rocket=L.marker(start,{
-
 icon:L.divIcon({
-
 html:"🚀",
-
 iconSize:[40,40]
-
 })
-
 }).addTo(map);
 
 
@@ -468,9 +366,7 @@ let arc=
 Math.sin(p*Math.PI)*10;
 
 rocket.setLatLng(
-
 [lat+arc,lng]
-
 );
 
 
@@ -478,35 +374,24 @@ rocket.setLatLng(
 
 let angle=
 Math.atan2(
-
 end[1]-lng,
-
 end[0]-lat
-
 )*180/Math.PI;
 
 rocket.getElement()
 .style.transform=
-
 `rotate(${angle}deg)`;
 
 
 // smoke
 
 L.circle(
-
 [lat,lng],
-
 {
-
 radius:20000,
-
 color:"orange",
-
 opacity:.4
-
 }
-
 ).addTo(map);
 
 
@@ -526,13 +411,9 @@ requestAnimationFrame(animate);
 function explode(pos){
 
 let boom=L.circle(pos,{
-
 radius:100000,
-
 color:"red",
-
 fillOpacity:.5
-
 }).addTo(map);
 
 setTimeout(
@@ -550,29 +431,19 @@ setTimeout(
 function sendDM(target){
 
 Swal.fire({
-
 title:"رسالة",
-
 input:"text"
-
 })
-
 .then(res=>{
 
 if(!res.value)return;
 
 push(
-
 ref(db,path("dm/"+target.id)),
-
 {
-
 from:currentPlayer.name,
-
 text:res.value
-
 }
-
 );
 
 });
@@ -592,11 +463,15 @@ if(!snap.exists())return;
 
 let msgs=snap.val();
 
-document.getElementById(
-"msg-count"
-).innerText=
+let msgEl =
+document.getElementById("msg-count");
 
+if(msgEl){
+
+msgEl.innerText=
 Object.keys(msgs).length;
+
+}
 
 }
 
@@ -612,17 +487,11 @@ Object.keys(msgs).length;
 function inviteClan(p){
 
 update(
-
 ref(db,path("players/"+p.id)),
-
 {
-
 clan:currentPlayer.clan||
-
 currentPlayer.id
-
 }
-
 );
 
 }
@@ -634,15 +503,17 @@ currentPlayer.id
 
 function updateHUD(){
 
-document.getElementById(
-"hud-coins"
-).innerText=
-currentPlayer.coins;
+let coinsEl =
+document.getElementById("hud-coins");
 
-document.getElementById(
-"hud-health"
-).innerText=
-currentPlayer.health+"%";
+let healthEl =
+document.getElementById("hud-health");
+
+if(coinsEl)
+coinsEl.innerText=currentPlayer.coins;
+
+if(healthEl)
+healthEl.innerText=currentPlayer.health+"%";
 
 }
 
@@ -654,28 +525,20 @@ currentPlayer.health+"%";
 function updateLeaderboard(){
 
 let list=
-document.getElementById(
-"leaderboard-list"
-);
+document.getElementById("leaderboard-list");
+
+if(!list)return;
 
 list.innerHTML="";
 
 Object.values(players)
-
-.sort(
-(a,b)=>b.score-a.score
-)
-
+.sort((a,b)=>b.score-a.score)
 .forEach(p=>{
 
 list.innerHTML+=`
-
 <div class="leaderboard-item">
-
 ${p.name}
-
 </div>
-
 `;
 
 });
@@ -687,33 +550,28 @@ ${p.name}
 // LOCATE
 // ==========================================================================
 
-document
-.getElementById("btn-locate")
+let locateBtn =
+document.getElementById("btn-locate");
 
-.onclick=()=>{
+if(locateBtn){
+
+locateBtn.onclick=()=>{
 
 map.once("click",e=>{
 
 update(
-
-ref(db,path(
-
-"players/"+currentPlayer.id
-
-)),
-
+ref(db,path("players/"+currentPlayer.id)),
 {
-
 lat:e.latlng.lat,
 lng:e.latlng.lng
-
 }
-
 );
 
 });
 
 };
+
+}
 
 
 // ==========================================================================

@@ -1,59 +1,40 @@
 // ==========================================================================
-// 💥 THE VISUAL EFFECTS & ANIMATION ENGINE (V6.0 - VFX)
+// 💥 THE VISUAL EFFECTS & ANIMATION ENGINE (V8.5 - VFX & SCOUT PLANES)
 // ==========================================================================
-// هذا الملف مسئول عن كل حركة على الشاشة: طيران الصواريخ، الانفجارات،
-// رجة الكاميرا، ومسح الرادار الذكي. (يعمل بمعدل 60 إطار في الثانية).
+// هذا الملف مسئول عن كل حركة على الشاشة: طيران الصواريخ، الانفجارات النووية،
+// رجة الكاميرا، مسح الرادار الذكي، وطائرات الاستطلاع. (يعمل بمعدل 60 إطار في الثانية).
 
 class EffectsManager {
     constructor() {
-        this.map = null; // سيتم تمرير الخريطة من game.js
+        this.map = null; // يتم تمرير الخريطة من game.js
         this.isShaking = false;
     }
 
     // ==========================================
-    // 1. تهيئة المحرك وربط الأحداث (Init)
+    // 1. تهيئة المحرك 
     // ==========================================
     init(mapInstance) {
         this.map = mapInstance;
-        console.log("💥 [EFFECTS] محرك المؤثرات البصرية جاهز للعمل.");
-
-        // الاستماع لإشارات إطلاق الصواريخ من network.js
-        window.addEventListener('Combat:MissileLaunched', (e) => this.handleMissileLaunch(e.detail));
-        
-        // الاستماع لإشارة الرادار من المساعد الذكي في ui.js
-        window.addEventListener('AI:TriggerRadarScan', () => this.triggerRadarScan());
+        console.log("💥 [EFFECTS] محرك المؤثرات البصرية والفيزياء جاهز للعمل.");
     }
 
     // ==========================================
-    // 2. معالجة إطلاق الصواريخ (Missile Routing)
+    // 🚀 2. أنيميشن طيران الصواريخ (Mathematical Flight)
     // ==========================================
-    handleMissileLaunch(data) {
-        // بما إننا في ملف Effects، لازم نجيب إحداثيات المهاجم والهدف من الـ DOM أو من مدير الخريطة
-        // للتبسيط في هذا الهيكل، سنفترض أننا نرسل الإحداثيات مباشرة أو نأخذها من الـ Markers
-        // هنا سنقوم بعمل دالة تقبل الإحداثيات لترسم الأنيميشن
-        // (في game.js سنقوم بتمرير الإحداثيات الدقيقة)
-    }
-
-    // الدالة الهندسية لطيران الصاروخ (Mathematical Flight Animation)
     animateFlight(startLatLng, endLatLng, weaponType) {
-        // 1. حساب المسافة والوقت
+        // حساب المسافة والوقت (من ثانيتين لـ 8 ثواني كحد أقصى)
         const distance = startLatLng.distanceTo(endLatLng);
-        // الوقت بيتحسب بناءً على المسافة (أسرع صاروخ بياخد ثانيتين، وأبطأ 8 ثواني)
         const duration = Math.min(8000, Math.max(2000, distance / 1500)); 
 
-        // 2. حساب زاوية الدوران الدقيقة (Trigonometry) لكي ينظر الصاروخ للهدف
+        // حساب زاوية دوران الصاروخ بدقة (Trigonometry)
         const p1 = this.map.latLngToContainerPoint(startLatLng);
         const p2 = this.map.latLngToContainerPoint(endLatLng);
-        // إضافة 45 درجة لأن إيموجي الصاروخ مائل بطبيعته 🚀
         const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x) * (180 / Math.PI) + 45;
 
-        // 3. تحديد شكل الصاروخ حسب نوع السلاح
-        let rocketHtml = '';
-        if (weaponType === 'nuke') {
-            rocketHtml = `<div class="missile nuke-missile" style="transform: rotate(${angle}deg);">☢️</div>`;
-        } else {
-            rocketHtml = `<div class="missile basic-missile" style="transform: rotate(${angle}deg);">🚀</div>`;
-        }
+        // تصميم الصاروخ حسب نوعه
+        let rocketHtml = weaponType === 'nuke' 
+            ? `<div class="missile nuke-missile" style="transform: rotate(${angle}deg); font-size: 30px; filter: drop-shadow(0 0 10px red);">☢️</div>`
+            : `<div class="missile basic-missile" style="transform: rotate(${angle}deg); font-size: 25px; filter: drop-shadow(0 0 8px orange);">🚀</div>`;
 
         const rocketIcon = L.divIcon({
             className: 'vfx-missile-container',
@@ -63,13 +44,14 @@ class EffectsManager {
 
         const flyingMarker = L.marker(startLatLng, { icon: rocketIcon, zIndexOffset: 2000 }).addTo(this.map);
         
-        // 4. المحرك الفيزيائي للحركة (60 FPS Animation Loop)
+        // المحرك الفيزيائي للحركة (60 FPS Animation Loop)
         const startTime = performance.now();
         
         const animate = (currentTime) => {
             const elapsed = currentTime - startTime;
-            // دالة Easing لتبطيء الصاروخ قليلاً عند الوصول (Ease-Out)
             let progress = Math.min(elapsed / duration, 1);
+            
+            // دالة Easing لتبطيء الصاروخ قليلاً عند الوصول (Ease-Out)
             const easeProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
 
             // Interpolation (استيفاء رياضي للإحداثيات)
@@ -91,7 +73,7 @@ class EffectsManager {
     }
 
     // ==========================================
-    // 3. نظام الانفجارات ورجة الكاميرا (Explosions & Screen Shake) 🌋
+    // 🌋 3. الانفجارات ورجة الكاميرا (Explosions & Shake)
     // ==========================================
     triggerExplosion(latlng, weaponType) {
         let explosionHtml = '';
@@ -107,11 +89,13 @@ class EffectsManager {
                 </div>`;
             explosionSize = [200, 200];
             timeout = 2500;
-            this.cameraShake(800, 'heavy'); // رجة شاشة قوية
+            this.cameraShake(800, 'heavy'); 
+            this.playSound('explosion'); // يفضل إضافة صوت explosion-heavy لاحقاً
         } else {
-            // انفجار عادي
-            explosionHtml = `<div class="basic-explosion">💥</div>`;
-            this.cameraShake(300, 'light'); // رجة خفيفة
+            // الانفجار العادي
+            explosionHtml = `<div class="basic-explosion" style="font-size: 40px; animation: pulseGlow 0.5s;">💥</div>`;
+            this.cameraShake(300, 'light'); 
+            this.playSound('explosion');
         }
 
         const expMarker = L.marker(latlng, {
@@ -119,11 +103,9 @@ class EffectsManager {
             zIndexOffset: 3000
         }).addTo(this.map);
 
-        // إزالة تأثير الانفجار بعد انتهاء وقته
         setTimeout(() => this.map.removeLayer(expMarker), timeout);
     }
 
-    // تأثير رجة الشاشة الاحترافي (Camera Shake Effect)
     cameraShake(duration, intensity = 'light') {
         if (this.isShaking) return;
         this.isShaking = true;
@@ -131,31 +113,58 @@ class EffectsManager {
         const mapWrapper = document.getElementById('map-wrapper');
         const shakeClass = intensity === 'heavy' ? 'shake-heavy' : 'shake-light';
         
-        mapWrapper.classList.add(shakeClass);
-        
-        setTimeout(() => {
-            mapWrapper.classList.remove(shakeClass);
-            this.isShaking = false;
-        }, duration);
+        if(mapWrapper) {
+            mapWrapper.classList.add(shakeClass);
+            setTimeout(() => {
+                mapWrapper.classList.remove(shakeClass);
+                this.isShaking = false;
+            }, duration);
+        }
     }
 
     // ==========================================
-    // 4. المسح الراداري للمساعد الذكي (AI Radar Scan) 📡
+    // ✈️ 4. طائرة الاستطلاع (Scout Plane UAV)
+    // ==========================================
+    animateScoutPlane() {
+        const plane = document.createElement('div');
+        plane.className = 'scout-plane-anim';
+        plane.innerHTML = '✈️';
+        document.body.appendChild(plane);
+        
+        this.playSound('ui-click'); 
+        
+        // تحريك الطيارة بعرض الشاشة
+        setTimeout(() => { plane.style.left = '120vw'; }, 100);
+        
+        // مسح الطيارة من الـ DOM بعد ما تخرج من الشاشة
+        setTimeout(() => { plane.remove(); }, 4500);
+    }
+
+    // ==========================================
+    // 📡 5. المسح الراداري (Radar Sweep)
     // ==========================================
     triggerRadarScan() {
         const radarOverlay = document.getElementById('radar-overlay');
-        radarOverlay.classList.remove('hidden');
-        radarOverlay.classList.add('radar-active');
+        if(radarOverlay) {
+            radarOverlay.classList.add('radar-active');
+            this.playSound('ui-click');
 
-        // تشغيل صوت تنبيه راداري خفيف لو متاح
-        const sfx = document.getElementById('sfx-ui-click');
-        if(sfx) { sfx.currentTime = 0; sfx.play().catch(()=>{}); }
+            // إخفاء الرادار بعد 3 ثواني
+            setTimeout(() => {
+                radarOverlay.classList.remove('radar-active');
+            }, 3000);
+        }
+    }
 
-        // إخفاء الرادار بعد 3 ثواني (مدة المسح)
-        setTimeout(() => {
-            radarOverlay.classList.remove('radar-active');
-            radarOverlay.classList.add('hidden');
-        }, 3000);
+    // ==========================================
+    // 🎵 مشغل الصوت الآمن (Safe Audio Player)
+    // ==========================================
+    playSound(type) {
+        const audio = document.getElementById(`sfx-${type}`) || document.getElementById(`sfx-ui-${type}`);
+        if(audio) { 
+            audio.currentTime = 0; 
+            audio.play().catch(()=>{ /* تجاهل خطأ المتصفح إذا منع الصوت */ }); 
+        }
     }
 }
 

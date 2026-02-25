@@ -1,6 +1,5 @@
-
 // ==========================================================================
-// 🖥️ THE USER INTERFACE & AI COMMANDER ENGINE (V7.0)
+// 🖥️ THE USER INTERFACE & DYNAMIC AI ENGINE (V8.0 - SUPER SMART)
 // ==========================================================================
 
 import { AI_CONFIG } from './config.js';
@@ -9,12 +8,8 @@ class UIManager {
     constructor() {
         this.dom = {
             hud: {
-                health: document.getElementById('val-health'),
-                healthBar: document.getElementById('bar-health'),
-                energy: document.getElementById('val-energy'),
-                energyBar: document.getElementById('bar-energy'),
-                coins: document.getElementById('val-coins'),
-                rockets: document.getElementById('val-rockets')
+                health: document.getElementById('val-health'), healthBar: document.getElementById('bar-health'),
+                coins: document.getElementById('val-coins'), rockets: document.getElementById('val-rockets')
             },
             ai: {
                 panel: document.getElementById('ai-commander-panel'),
@@ -22,61 +17,66 @@ class UIManager {
                 btnScan: document.getElementById('btn-ai-scan'),
                 btnSuggest: document.getElementById('btn-ai-suggest')
             },
-            leaderboard: document.getElementById('leaderboard-list'),
-            killFeed: document.getElementById('combat-log'),
-            audio: {
-                aiVoice: document.getElementById('sfx-ai-voice'),
-                notification: document.getElementById('sfx-notification')
+            leaderboard: {
+                panel: document.getElementById('right-dashboard'),
+                list: document.getElementById('leaderboard-list')
             }
         };
-        
         this.isAiTyping = false;
         this.lastPlayerState = null;
+        this.allPlayersData = null; // عشان الـ AI يدرس الخريطة
     }
 
     init() {
-        console.log("🖥️ [UI] واجهة المستخدم والمساعد الذكي قيد التشغيل...");
+        console.log("🖥️ [UI] واجهة المستخدم والمساعد الذكي (النسخة الخارقة) قيد التشغيل...");
         this.setupEventListeners();
+        this.setupTabsAndToggles(); 
         this.setupAICommander();
-        this.setupTabs(); // تشغيل التبديل بين القوائم
     }
 
-    // تشغيل نظام التبديل (Tabs) بين التصنيف والتحالف
-    setupTabs() {
+    // ==========================================
+    // 🎛️ نظام إخفاء وإظهار القوائم (عشان نفضي الشاشة)
+    // ==========================================
+    setupTabsAndToggles() {
+        // 1. تصغير وتكبير الـ AI Commander
+        const minimizeAiBtn = this.dom.ai.panel.querySelector('.minimize-btn');
+        if(minimizeAiBtn) {
+            minimizeAiBtn.addEventListener('click', () => {
+                const content = this.dom.ai.panel.querySelectorAll('.ai-chat-box, .ai-actions');
+                content.forEach(el => el.style.display = el.style.display === 'none' ? 'block' : 'none');
+                this.playSound('click');
+            });
+        }
+
+        // 2. التبديل الفعال بين (التصنيف) و (التحالف)
         const tabBtns = document.querySelectorAll('.tab-btn');
         const tabContents = document.querySelectorAll('.tab-content');
 
         tabBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                // إزالة الكلاس النشط من كل الزراير والمحتوى
+            btn.addEventListener('click', (e) => {
+                // إزالة التفعيل من الكل
                 tabBtns.forEach(b => b.classList.remove('active'));
-                tabContents.forEach(c => {
-                    c.classList.remove('active');
-                    c.style.display = 'none'; // إخفاء الباقي
-                });
-
-                // تفعيل الزرار والمحتوى المطلوب
-                btn.classList.add('active');
-                const targetId = btn.getAttribute('data-target');
-                const targetContent = document.getElementById(targetId);
-                targetContent.classList.add('active');
-                targetContent.style.display = 'block';
+                tabContents.forEach(c => { c.classList.remove('active'); c.style.display = 'none'; });
                 
-                // صوت كليك خفيف
+                // تفعيل المطلوب
+                e.currentTarget.classList.add('active');
+                const targetId = e.currentTarget.getAttribute('data-target');
+                const targetEl = document.getElementById(targetId);
+                if(targetEl) { targetEl.classList.add('active'); targetEl.style.display = 'block'; }
                 this.playSound('click');
             });
         });
-        
-        // إخفاء تبويبة التحالف في البداية
-        document.getElementById('tab-alliance').style.display = 'none';
+
+        // إخفاء التحالف كبداية عشان التصنيف يظهر
+        const allianceTab = document.getElementById('tab-alliance');
+        if(allianceTab) allianceTab.style.display = 'none';
     }
 
     setupEventListeners() {
-        window.addEventListener('Sync:MyPlayerUpdated', (e) => this.updateHUD(e.detail));
-        window.addEventListener('Sync:MapUpdated', (e) => this.updateLeaderboard(e.detail));
-        window.addEventListener('Sync:KillFeedUpdated', (e) => this.renderKillFeed(e.detail));
+        window.addEventListener('Sync:MyPlayerUpdated', (e) => { this.updateHUD(e.detail); });
+        window.addEventListener('Sync:MapUpdated', (e) => { this.allPlayersData = e.detail; this.updateLeaderboard(e.detail); });
         
-        // توصيل زراير الأكشن السفلية بـ game.js
+        // توصيل زراير الأكشن اللي تحت بـ game.js
         document.getElementById('btn-action-locate').addEventListener('click', () => window.dispatchEvent(new CustomEvent('UI:ActionLocate')));
         document.getElementById('btn-action-collect').addEventListener('click', () => window.dispatchEvent(new CustomEvent('UI:ActionMine')));
         document.getElementById('btn-action-shop').addEventListener('click', () => window.dispatchEvent(new CustomEvent('UI:ActionShop')));
@@ -85,37 +85,63 @@ class UIManager {
 
     updateHUD(playerData) {
         this.lastPlayerState = playerData;
-
         this.dom.hud.health.innerText = playerData.health;
-        this.dom.hud.energy.innerText = playerData.energy || 100;
         this.dom.hud.coins.innerText = playerData.coins;
         this.dom.hud.rockets.innerText = playerData.rockets;
-
         this.dom.hud.healthBar.style.width = `${playerData.health}%`;
-        this.dom.hud.energyBar.style.width = `${playerData.energy || 100}%`;
 
         if (playerData.health <= 30) {
             this.dom.hud.healthBar.style.backgroundColor = '#ff4757';
             this.dom.hud.healthBar.style.boxShadow = '0 0 10px #ff4757';
         } else {
             this.dom.hud.healthBar.style.backgroundColor = '#10ac84';
-            this.dom.hud.healthBar.style.boxShadow = 'inset 0 0 5px #10ac84';
         }
     }
 
+    // ==========================================
+    // 🤖 عقل الذكاء الاصطناعي (ردود ديناميكية متغيرة)
+    // ==========================================
     setupAICommander() {
-        if (!AI_CONFIG.enabled) return;
-
-        this.dom.ai.btnScan.addEventListener('click', () => {
-            this.aiSpeak("جاري فحص محيط قاعدتك التكتيكي...");
-            window.dispatchEvent(new CustomEvent('AI:TriggerRadarScan'));
-        });
-
+        // 1. زرار اقتراح تكتيك (بيحلل حالتك)
         this.dom.ai.btnSuggest.addEventListener('click', () => {
             if (!this.lastPlayerState) return;
-            let tactic = "قم بتوسيع نفوذك للسيطرة على الخريطة.";
-            if (this.lastPlayerState.coins < 100) tactic = "الموارد حرجة. ركز على التعدين لتطوير جيشك.";
-            this.aiSpeak(tactic);
+            const p = this.lastPlayerState;
+            let tactics = [];
+
+            if (p.health < 50) tactics.push("⚠️ سيدي! قاعدتنا تنهار، استخدم مواردك للإصلاح فوراً!");
+            if (p.coins < 100) tactics.push("💰 الموارد منخفضة. أرسل وحدات التعدين لجمع الذهب لتطوير جيشك.");
+            if (p.rockets === 0 && p.coins > 100) tactics.push("🚀 لا نملك ذخيرة! افتح السوق واشتري صواريخ للدفاع عن أراضينا.");
+            if (p.coins > 300) tactics.push("👑 الخزينة ممتلئة يا إمبراطور. حان وقت شراء قنبلة نووية وإظهار قوتنا!");
+            
+            // اختيار رد عشوائي من الردود المناسبة لحالتك
+            let finalTactic = tactics.length > 0 ? tactics[Math.floor(Math.random() * tactics.length)] : "🛡️ الأوضاع مستقرة. أقترح توسيع نفوذك لاحتلال مناطق جديدة.";
+            this.aiSpeak(finalTactic);
+        });
+
+        // 2. زرار فحص الأعداء (بيفحص نطاقك إنت بس)
+        this.dom.ai.btnScan.addEventListener('click', () => {
+            if (!this.lastPlayerState || !this.lastPlayerState.lat || !this.allPlayersData) {
+                return this.aiSpeak("❌ لم تتمركز بعد! حدد موقع قاعدتك أولاً لأتمكن من تشغيل الرادار.");
+            }
+            
+            let enemiesNearby = 0;
+            const myPos = L.latLng(this.lastPlayerState.lat, this.lastPlayerState.lng);
+
+            for (let id in this.allPlayersData) {
+                if (id !== this.lastPlayerState.id && this.allPlayersData[id].lat) {
+                    const enemyPos = L.latLng(this.allPlayersData[id].lat, this.allPlayersData[id].lng);
+                    const distance = myPos.distanceTo(enemyPos); // المسافة بالمتر
+                    if (distance < 500000) enemiesNearby++; // نطاق 500 كم
+                }
+            }
+
+            window.dispatchEvent(new CustomEvent('AI:TriggerRadarScan')); // تشغيل الأنيميشن الأخضر
+            
+            if (enemiesNearby > 0) {
+                this.aiSpeak(`🚨 تحذير! رصدت الأقمار الصناعية ${enemiesNearby} أعداء بالقرب من حدودنا.`);
+            } else {
+                this.aiSpeak("✅ المنطقة آمنة. لا يوجد أعداء في نطاق 500 كم.");
+            }
         });
     }
 
@@ -142,48 +168,21 @@ class UIManager {
     }
 
     updateLeaderboard(allPlayers) {
-        this.dom.leaderboard.innerHTML = '';
-        const sortedPlayers = Object.values(allPlayers)
-            .sort((a, b) => b.score - a.score)
-            .slice(0, 15); 
-
+        this.dom.leaderboard.list.innerHTML = '';
+        const sortedPlayers = Object.values(allPlayers).sort((a, b) => b.score - a.score).slice(0, 15); 
         sortedPlayers.forEach((p, index) => {
-            let statusIcon = p.health <= 0 ? '☠️' : (p.status === 'online' ? '🟢' : '⚪');
-            let colorDot = `<span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${p.allianceColor}; margin-left:5px;"></span>`;
-            
-            this.dom.leaderboard.innerHTML += `
+            let status = p.health <= 0 ? '☠️' : '🟢';
+            this.dom.leaderboard.list.innerHTML += `
                 <div class="leaderboard-item">
-                    <div class="l-info" style="display:flex; align-items:center;">
-                        <strong>#${index + 1} ${p.name}</strong> ${colorDot}
-                    </div>
-                    <div class="l-stats">
-                        <span class="l-score">⭐ ${p.score}</span>
-                        <span class="l-status">${statusIcon}</span>
-                    </div>
+                    <div class="l-info"><strong>#${index + 1} ${p.name}</strong> <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${p.allianceColor};"></span></div>
+                    <div class="l-stats"><span class="l-score">⭐ ${p.score}</span> ${status}</div>
                 </div>
             `;
         });
     }
 
-    renderKillFeed(feedData) {
-        this.dom.killFeed.innerHTML = ''; 
-        const recentMsgs = Object.values(feedData)
-            .sort((a, b) => b.timestamp - a.timestamp)
-            .slice(0, 4);
-
-        recentMsgs.forEach(msg => {
-            if (Date.now() - msg.timestamp > 10000) return;
-            const el = document.createElement('div');
-            el.className = `combat-msg msg-${msg.type}`;
-            el.innerHTML = msg.text;
-            this.dom.killFeed.appendChild(el);
-            this.playSound('notification');
-        });
-    }
-
     playSound(type) {
-        // Fallback in case audio element doesn't exist
-        const audio = this.dom.audio[type] || document.getElementById(`sfx-ui-${type}`);
+        const audio = document.getElementById(`sfx-ui-${type}`) || document.getElementById(`sfx-${type}`);
         if(audio) { audio.currentTime = 0; audio.play().catch(()=>{}); }
     }
 }

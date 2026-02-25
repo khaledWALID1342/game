@@ -1,158 +1,153 @@
 /* ==========================================================================
-   🎨 THE ULTIMATE GRAPHICS & UI ENGINE (V6.5 - MOBILE FIRST)
+   🎨 THE ULTIMATE CYBERPUNK UI ENGINE (V7.0 - MOBILE FOCUSED)
    ========================================================================== */
 
 :root {
-    /* الألوان العسكرية والسايبر بانك */
     --neon-red: #ff4757;
-    --neon-blue: #1e90ff;
-    --neon-green: #2ed573;
-    --neon-gold: #ffa502;
-    --cyber-bg: #070b14;
-    --panel-bg: rgba(13, 17, 23, 0.75); /* شفافية زجاجية */
-    --ui-border: rgba(255, 255, 255, 0.1);
-    
-    /* تأثيرات الزجاج والماتريال */
-    --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
-    --glass-blur: blur(8px);
+    --neon-blue: #00d2d3;
+    --neon-green: #10ac84;
+    --neon-gold: #feca57;
+    --bg-glass: rgba(10, 15, 25, 0.85);
+    --border-glass: 1px solid rgba(0, 210, 211, 0.3);
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; user-select: none; font-family: 'Cairo', sans-serif; }
+* { box-sizing: border-box; margin: 0; padding: 0; user-select: none; font-family: 'Cairo', 'Orbitron', sans-serif; }
 
-body.cyber-theme {
-    background-color: var(--cyber-bg);
-    color: #fff;
-    overflow: hidden;
-    width: 100vw; height: 100vh;
-}
+body { background: #000; overflow: hidden; width: 100vw; height: 100vh; }
 
 /* ==========================================
-   1. شاشة البوت والتحميل (Boot Screen)
+   1. الخريطة والرادار (تحت كل حاجة)
    ========================================== */
-.overlay-fullscreen {
-    position: fixed; inset: 0;
-    background: radial-gradient(circle at center, #111827 0%, #000 100%);
-    z-index: 9999; display: flex; justify-content: center; align-items: center;
-    transition: opacity 0.8s ease-in-out;
-}
-.overlay-fullscreen.hidden { opacity: 0; pointer-events: none; }
-.cyber-container { text-align: center; width: 100%; max-width: 500px; padding: 20px; }
+#map-wrapper { position: fixed; inset: 0; z-index: 1; width: 100vw; height: 100vh; background: #050505; }
+#map { width: 100%; height: 100%; filter: contrast(1.1) saturate(1.2) brightness(0.8); }
 
-.glitch-text {
-    font-size: 2.5rem; font-weight: 900; color: #fff;
-    text-shadow: 0 0 10px var(--neon-red); margin-bottom: 20px;
+/* الرادار - لا يمنع اللمس أبدًا */
+#radar-overlay {
+    position: fixed; inset: 0; z-index: 5;
+    pointer-events: none !important; /* هذا السطر يمنع الرادار من حجب الخريطة */
+    opacity: 0; transition: opacity 0.5s;
+    background: repeating-radial-gradient(rgba(16, 172, 132, 0.1), transparent 50px);
 }
-.cyber-panel { background: var(--panel-bg); border: 1px solid var(--ui-border); border-radius: 12px; padding: 20px; }
-.server-card { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid var(--ui-border); }
-.cyber-input { width: 100%; padding: 12px; margin-bottom: 10px; background: rgba(0,0,0,0.5); border: 1px solid var(--neon-blue); color: #fff; border-radius: 5px; text-align: center; }
-.cyber-button { width: 100%; padding: 12px; background: rgba(30, 144, 255, 0.2); border: 1px solid var(--neon-blue); color: var(--neon-blue); font-weight: bold; border-radius: 5px; cursor: pointer; transition: 0.3s; }
-.cyber-button:hover, .cyber-button.active { background: var(--neon-blue); color: #fff; box-shadow: 0 0 15px var(--neon-blue); }
+#radar-overlay.radar-active { opacity: 1; }
+#radar-overlay.radar-active::after {
+    content: ''; position: absolute; top: 50%; left: 50%; width: 200vw; height: 200vh;
+    transform: translate(-50%, -50%);
+    background: conic-gradient(from 0deg, transparent 70%, rgba(16, 172, 132, 0.5) 100%);
+    border-radius: 50%; animation: scan 2s linear infinite;
+}
+@keyframes scan { 100% { transform: translate(-50%, -50%) rotate(360deg); } }
 
 /* ==========================================
-   2. الواجهة الرئيسية (Main HUD) - تم تظبيطها
+   2. الواجهة الرئيسية (HUD) - تسمح بلمس الخريطة
    ========================================== */
 #main-hud {
-    position: absolute; inset: 0; z-index: 4000;
-    pointer-events: none; /* عشان نقدر ندوس على الخريطة */
+    position: fixed; inset: 0; z-index: 100;
+    pointer-events: none; /* الواجهة لا تمنع اللمس... */
     display: flex; flex-direction: column; justify-content: space-between;
 }
-#main-hud.active-hud > * { pointer-events: auto; } /* تفعيل الضغط على القوائم فقط */
+/* ...لكن عناصر الواجهة نفسها قابلة للمس */
+#main-hud > * { pointer-events: auto; } 
 
-/* الشريط العلوي */
+/* الشريط العلوي (Top Bar) */
 .hud-top {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 10px; background: var(--panel-bg); backdrop-filter: var(--glass-blur);
-    border-bottom: 1px solid var(--ui-border);
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: 10px; background: linear-gradient(180deg, rgba(0,0,0,0.9), transparent);
+    width: 100%; flex-wrap: wrap; gap: 10px;
 }
-.stats-zone { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.brand-zone { display: none; } /* إخفاء اللوجو لتوفير مساحة على الموبايل */
+
+.stats-zone {
+    display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; width: 100%;
+}
 .stat-box {
-    background: rgba(0,0,0,0.5); border: 1px solid var(--ui-border); padding: 5px 10px;
-    border-radius: 15px; display: flex; align-items: center; gap: 5px; font-size: 0.85rem;
+    background: var(--bg-glass); border: var(--border-glass);
+    padding: 4px 10px; border-radius: 20px;
+    display: flex; align-items: center; gap: 5px; font-size: 0.8rem; font-weight: bold;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
 }
-.stat-box.health { color: var(--neon-green); border-color: var(--neon-green); }
+.stat-box.health { color: var(--neon-green); box-shadow: inset 0 0 5px var(--neon-green); }
+.stat-box.energy { color: var(--neon-blue); box-shadow: inset 0 0 5px var(--neon-blue); }
 .stat-box.coins { color: var(--neon-gold); }
 .stat-box.ammo { color: var(--neon-red); }
 
 /* ==========================================
-   3. القوائم الجانبية (AI & Leaderboard)
+   3. القوائم الجانبية (Panels)
    ========================================== */
 .floating-panel {
-    position: absolute; top: 70px; width: 200px;
-    background: var(--panel-bg); backdrop-filter: var(--glass-blur);
-    border: 1px solid var(--ui-border); border-radius: 8px; padding: 10px;
+    background: var(--bg-glass); border: var(--border-glass);
+    padding: 10px; border-radius: 8px; width: 160px;
+    box-shadow: 0 0 20px rgba(0, 210, 211, 0.2);
+    backdrop-filter: blur(5px);
+    pointer-events: auto; /* مهم للضغط */
 }
-.left-panel { left: 10px; border-left: 3px solid var(--neon-blue); }
-.right-panel { right: 10px; border-right: 3px solid var(--neon-gold); }
+.left-panel { position: absolute; left: 10px; top: 60px; border-left: 3px solid var(--neon-blue); }
+.right-panel { position: absolute; right: 10px; top: 60px; border-right: 3px solid var(--neon-gold); }
 
-/* زراير القوائم */
-.ai-btn, .tab-btn {
-    width: 100%; padding: 8px; margin-top: 5px; background: rgba(255,255,255,0.05);
-    border: 1px solid var(--ui-border); color: #fff; border-radius: 4px; font-size: 0.8rem;
+.panel-header { font-size: 0.8rem; color: var(--neon-blue); font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; margin-bottom: 5px; }
+.ai-chat-box { height: 60px; overflow-y: auto; font-size: 0.7rem; color: #fff; margin-bottom: 5px; }
+.ai-msg { margin-bottom: 3px; border-left: 2px solid var(--neon-green); padding-left: 5px; }
+
+/* أزرار القوائم (تصميم احترافي) */
+.ai-btn, .tab-btn, .cyber-button.small {
+    width: 100%; padding: 6px; margin-top: 5px;
+    background: rgba(0, 210, 211, 0.1); border: 1px solid var(--neon-blue);
+    color: #fff; border-radius: 4px; font-size: 0.75rem; cursor: pointer; transition: 0.2s;
 }
-.ai-btn:hover { background: rgba(30, 144, 255, 0.3); border-color: var(--neon-blue); }
-.tab-btn.active { background: var(--neon-gold); color: #000; font-weight: bold; }
-
-/* شات الذكاء الاصطناعي */
-.ai-chat-box { height: 80px; overflow-y: auto; font-size: 0.75rem; color: var(--neon-blue); margin-bottom: 10px; }
-.leaderboard-item { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.ai-btn:active, .tab-btn:active { background: var(--neon-blue); transform: scale(0.95); }
 
 /* ==========================================
-   4. شريط الأكشن السفلي (Mobile Action Bar)
+   4. شريط الأكشن السفلي (Action Bar) - أنيميشن خارق
    ========================================== */
-.bottom-nav {
-    background: var(--panel-bg); backdrop-filter: var(--glass-blur);
-    border-top: 1px solid var(--ui-border); padding: 10px 5px;
-    padding-bottom: max(10px, env(safe-area-inset-bottom)); /* للأيفون */
+#action-bar {
+    background: var(--bg-glass); border-top: var(--border-glass);
+    padding: 10px 5px; width: 100%;
+    backdrop-filter: blur(10px);
+    animation: slideUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
-.nav-container { display: flex; justify-content: space-around; align-items: center; }
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+.nav-container { display: flex; justify-content: space-evenly; align-items: flex-end; }
+
 .action-btn {
-    background: transparent; border: none; color: #a4b0be;
+    background: transparent; border: none; outline: none;
+    color: #888; font-size: 0.7rem; font-weight: bold;
     display: flex; flex-direction: column; align-items: center; gap: 5px;
-    font-size: 0.75rem; width: 60px; position: relative;
+    cursor: pointer; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    position: relative;
 }
-.action-btn i { font-size: 1.5rem; transition: 0.2s; }
-.action-btn:hover i, .action-btn:active i { color: #fff; transform: translateY(-3px); }
-.primary-action i { color: var(--neon-red); font-size: 2rem; filter: drop-shadow(0 0 8px var(--neon-red)); }
+.action-btn i {
+    font-size: 1.5rem; background: rgba(255,255,255,0.05); padding: 12px;
+    border-radius: 12px; border: 1px solid transparent; transition: 0.3s;
+}
+
+/* تأثير الضغط المرعب */
+.action-btn:hover i { color: #fff; border-color: rgba(255,255,255,0.3); }
+.action-btn:active i { transform: scale(0.8); background: var(--neon-blue); border-color: var(--neon-blue); box-shadow: 0 0 20px var(--neon-blue); color: #000; }
+
+/* زر الهجوم الرئيسي (مميز) */
+.primary-action { color: var(--neon-red); transform: translateY(-10px); }
+.primary-action i {
+    background: rgba(255, 71, 87, 0.1); border-color: var(--neon-red);
+    font-size: 1.8rem; padding: 15px; border-radius: 50%;
+    box-shadow: 0 0 15px rgba(255, 71, 87, 0.4);
+    animation: pulse-red 2s infinite;
+}
+.primary-action:active i { transform: scale(0.9); background: var(--neon-red); color: #fff; box-shadow: 0 0 30px var(--neon-red); }
+
+@keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(255, 71, 87, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0); } }
 
 /* ==========================================
-   5. الرادار والمؤثرات البصرية (VFX)
+   5. شاشة البوت والإشعارات
    ========================================== */
-#map-wrapper { position: absolute; inset: 0; z-index: 1000; background: #000; }
-#map { width: 100%; height: 100%; filter: contrast(1.2) saturate(1.2) brightness(0.7); }
+.combat-feed-container { position: absolute; top: 120px; left: 50%; transform: translateX(-50%); z-index: 3000; width: 90%; pointer-events: none; }
+.combat-msg { background: rgba(0,0,0,0.8); border: 1px solid var(--neon-red); padding: 5px 10px; border-radius: 20px; font-size: 0.7rem; margin-bottom: 5px; text-align: center; color: #fff; animation: slideDown 0.3s ease-out; }
+@keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-/* تظبيط الرادار عشان ميعميش الشاشة */
-.radar-scan-effect {
-    position: absolute; inset: 0; z-index: 2000; pointer-events: none; /* أهم سطر عشان تدوس تحته */
-    background: radial-gradient(circle at center, rgba(46, 213, 115, 0.05) 0%, transparent 60%);
-    opacity: 0.7; /* تخفيف الرؤية */
-}
-.radar-scan-effect.radar-active::before {
-    content: ''; position: absolute; top: 50%; left: 50%; width: 200vw; height: 200vh;
-    margin-top: -100vh; margin-left: -100vw;
-    background: conic-gradient(from 0deg, transparent 70%, rgba(46, 213, 115, 0.4) 100%);
-    border-radius: 50%; animation: radar-sweep 2s linear infinite;
-}
-@keyframes radar-sweep { 100% { transform: rotate(360deg); } }
+/* شاشة التحميل والدخول */
+.cyber-panel { background: var(--bg-glass); border: var(--border-glass); padding: 20px; border-radius: 12px; }
+.cyber-input { width: 100%; padding: 12px; margin-bottom: 10px; background: #000; border: 1px solid var(--neon-blue); color: var(--neon-blue); border-radius: 5px; outline: none; text-align: center; font-weight: bold; }
+.cyber-button.primary { width: 100%; padding: 12px; background: rgba(0, 210, 211, 0.1); border: 1px solid var(--neon-blue); color: var(--neon-blue); font-weight: bold; border-radius: 5px; cursor: pointer; transition: 0.3s; }
+.cyber-button.primary:active { background: var(--neon-blue); color: #000; box-shadow: 0 0 20px var(--neon-blue); }
 
-/* الإشعارات (Kill Feed) */
-.combat-feed-container { position: absolute; top: 80px; left: 50%; transform: translateX(-50%); z-index: 3000; width: 90%; max-width: 300px; text-align: center; pointer-events: none; }
-.combat-msg { background: rgba(0,0,0,0.8); border: 1px solid var(--neon-red); padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; margin-bottom: 5px; animation: slideDown 0.3s ease-out; }
-
-/* ==========================================
-   6. تظبيط شاشات الموبايل (Mobile First Responsiveness) 📱
-   ========================================== */
-@media (max-width: 768px) {
-    .brand-zone span { display: none; } /* إخفاء اسم اللعبة لتوفير مساحة */
-    .hud-top { padding: 5px; flex-wrap: wrap; }
-    .stats-zone { gap: 5px; }
-    .stat-box { padding: 3px 8px; font-size: 0.75rem; }
-    
-    /* تصغير القوائم الجانبية على الموبايل */
-    .floating-panel { width: 140px; top: 60px; padding: 5px; }
-    .left-panel { left: 5px; }
-    .right-panel { right: 5px; }
-    .ai-chat-box { height: 60px; font-size: 0.65rem; }
-    .ai-btn, .tab-btn { font-size: 0.7rem; padding: 5px; }
-    
-    .glitch-text { font-size: 1.8rem; }
-}
+/* إخفاء شريط السكرول بالكامل */
+::-webkit-scrollbar { display: none; }

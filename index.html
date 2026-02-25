@@ -1,438 +1,321 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="ltr">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World Rockets Game 🚀</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root {
+            --primary: #ff4757;
+            --secondary: #2f3542;
+            --accent: #ffa502;
+            --bg-color: #0d1117;
+        }
 
-<title>World Rockets Game</title>
+        body {
+            margin: 0;
+            background: var(--bg-color);
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
+        }
 
-<link rel="stylesheet"
-href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+        #topbar {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            position: relative;
+        }
 
-<style>
+        .logo {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 0 10px var(--primary);
+        }
 
-body{
-margin:0;
-background:#0b0f1a;
-color:white;
-font-family:Arial;
-}
+        .buttons-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+        }
 
-#topbar{
-background:black;
-padding:10px;
-display:flex;
-justify-content:space-between;
-}
+        button {
+            background: linear-gradient(135deg, var(--primary), #ff6b81);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 6px rgba(255, 71, 87, 0.3);
+        }
 
-button{
-background:red;
-color:white;
-border:none;
-padding:10px;
-margin:3px;
-}
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(255, 71, 87, 0.5);
+        }
 
-#map{
-height:60vh;
-}
+        button.btn-coins { background: linear-gradient(135deg, #2ed573, #7bed9f); box-shadow: 0 4px 6px rgba(46, 213, 115, 0.3); }
+        button.btn-shop { background: linear-gradient(135deg, var(--accent), #ff7f50); box-shadow: 0 4px 6px rgba(255, 165, 2, 0.3); }
 
-#panel{
-background:#111;
-padding:10px;
-}
+        #map {
+            height: 50vh;
+            width: 100%;
+            border-bottom: 3px solid var(--primary);
+        }
 
-#leaderboard{
-background:#000;
-padding:10px;
-height:150px;
-overflow:auto;
-}
+        #panel {
+            background: var(--secondary);
+            padding: 15px;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            font-size: 0.9rem;
+            border-bottom: 1px solid #444;
+        }
 
-</style>
+        .stat-box {
+            background: rgba(0,0,0,0.4);
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
 
+        #leaderboard {
+            background: var(--bg-color);
+            padding: 20px;
+            height: 25vh;
+            overflow-y: auto;
+        }
+
+        .leaderboard-title {
+            color: var(--accent);
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .player-row {
+            background: rgba(255,255,255,0.05);
+            margin-bottom: 8px;
+            padding: 10px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            border-left: 4px solid var(--primary);
+            transition: background 0.3s;
+        }
+        
+        .player-row:hover {
+            background: rgba(255,255,255,0.1);
+        }
+    </style>
 </head>
 <body>
 
-<div id="topbar">
-
-<div>
-🌍 World Rockets Game
-</div>
-
-<div>
-
-<button onclick="login()">👤 دخول</button>
-
-<button onclick="addPlayer()">📍 موقعي</button>
-
-<button onclick="launchRocket()">🚀 صاروخ</button>
-
-<button onclick="earnCoins()">💰 Coins</button>
-
-</div>
-
-</div>
-
-<div id="map"></div>
-
-<div id="panel">
-
-👤 Name:
-<span id="name">-</span>
-
-|
-
-⭐ Score:
-<span id="score">0</span>
-
-|
-
-🚀 Rockets:
-<span id="rockets">0</span>
-
-|
-
-💰 Coins:
-<span id="coins">0</span>
-
-</div>
-
-<div id="leaderboard">
-
-🏆 Leaderboard
-
-<div id="list"></div>
-
-</div>
-
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
-<script>
-
-//////////////////////////////////////////////////////
-// DATABASE
-//////////////////////////////////////////////////////
-
-var DB = {
-
-players:[],
-
-current:null
-
-};
-
-//////////////////////////////////////////////////////
-// SAVE
-//////////////////////////////////////////////////////
-
-function save(){
-
-localStorage.setItem(
-
-"game",
-
-JSON.stringify(DB)
-
-);
-
-}
-
-//////////////////////////////////////////////////////
-// LOAD
-//////////////////////////////////////////////////////
-
-function load(){
-
-var data = localStorage.getItem("game");
-
-if(data){
-
-DB = JSON.parse(data);
-
-}
-
-}
-
-//////////////////////////////////////////////////////
-// LOGIN
-//////////////////////////////////////////////////////
-
-function login(){
-
-var name = prompt("اسمك");
-
-if(!name)return;
-
-var player = DB.players.find(
-
-p=>p.name==name
-
-);
-
-if(player){
-
-DB.current = player;
-
-}else{
-
-player = {
-
-id:Date.now(),
-
-name:name,
-
-lat:0,
-
-lng:0,
-
-score:100,
-
-coins:50,
-
-rockets:3
-
-};
-
-DB.players.push(player);
-
-DB.current=player;
-
-}
-
-save();
-
-updateUI();
-
-draw();
-
-}
-
-//////////////////////////////////////////////////////
-// MAP
-//////////////////////////////////////////////////////
-
-var map = L.map(
-
-'map',
-
-{
-
-zoomControl:false,
-
-touchZoom:true,
-
-scrollWheelZoom:false
-
-}
-
-).setView([20,0],2);
-
-L.tileLayer(
-
-'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
-
-).addTo(map);
-
-//////////////////////////////////////////////////////
-// DRAW PLAYERS
-//////////////////////////////////////////////////////
-
-function draw(){
-
-map.eachLayer(function(layer){
-
-if(layer instanceof L.Marker)
-
-map.removeLayer(layer);
-
-});
-
-DB.players.forEach(function(p){
-
-if(!p.lat)return;
-
-var marker = L.marker([p.lat,p.lng])
-
-.addTo(map)
-
-.bindPopup(
-
-"👤 "+p.name+
-
-"<br>⭐ "+p.score+
-
-"<br>🚀 "+p.rockets
-
-);
-
-marker.on("click",function(){
-
-target=p;
-
-});
-
-});
-
-updateLeaderboard();
-
-}
-
-//////////////////////////////////////////////////////
-// ADD LOCATION
-//////////////////////////////////////////////////////
-
-function addPlayer(){
-
-if(!DB.current){
-
-alert("سجل دخول");
-
-return;
-
-}
-
-alert("اضغط على موقعك");
-
-map.once("click",function(e){
-
-DB.current.lat=e.latlng.lat;
-
-DB.current.lng=e.latlng.lng;
-
-save();
-
-draw();
-
-});
-
-}
-
-//////////////////////////////////////////////////////
-// COINS
-//////////////////////////////////////////////////////
-
-function earnCoins(){
-
-if(!DB.current)return;
-
-DB.current.coins+=10;
-
-save();
-
-updateUI();
-
-}
-
-//////////////////////////////////////////////////////
-// ROCKET
-//////////////////////////////////////////////////////
-
-var target=null;
-
-function launchRocket(){
-
-if(!target){
-
-alert("اختر لاعب");
-
-return;
-
-}
-
-if(DB.current.rockets<=0){
-
-alert("لا يوجد صواريخ");
-
-return;
-
-}
-
-DB.current.rockets--;
-
-target.score-=20;
-
-DB.current.score+=20;
-
-save();
-
-draw();
-
-updateUI();
-
-}
-
-//////////////////////////////////////////////////////
-// LEADERBOARD
-//////////////////////////////////////////////////////
-
-function updateLeaderboard(){
-
-var list = document.getElementById("list");
-
-list.innerHTML="";
-
-DB.players
-
-.sort((a,b)=>b.score-a.score)
-
-.forEach(function(p){
-
-list.innerHTML+=
-
-"<div>"
-
-+p.name+
-
-" ⭐ "+p.score+
-
-"</div>";
-
-});
-
-}
-
-//////////////////////////////////////////////////////
-// UI
-//////////////////////////////////////////////////////
-
-function updateUI(){
-
-if(!DB.current)return;
-
-document.getElementById("name")
-
-.innerText=DB.current.name;
-
-document.getElementById("score")
-
-.innerText=DB.current.score;
-
-document.getElementById("coins")
-
-.innerText=DB.current.coins;
-
-document.getElementById("rockets")
-
-.innerText=DB.current.rockets;
-
-}
-
-//////////////////////////////////////////////////////
-// INIT
-//////////////////////////////////////////////////////
-
-load();
-
-draw();
-
-updateUI();
-
-//////////////////////////////////////////////////////
-
-</script>
-
+    <div id="topbar">
+        <div class="logo">🌍 World Rockets Game 🚀</div>
+        <div class="buttons-container">
+            <button onclick="login()">👤 دخول</button>
+            <button onclick="addPlayer()">📍 موقعي</button>
+            <button onclick="launchRocket()">🎯 اضرب صاروخ</button>
+            <button class="btn-shop" onclick="buyRocket()">🛒 شراء صاروخ</button>
+            <button class="btn-coins" onclick="earnCoins()">💰 تجميع Coins</button>
+        </div>
+    </div>
+
+    <div id="map"></div>
+
+    <div id="panel">
+        <div class="stat-box">👤 <span id="name">ضيف</span></div>
+        <div class="stat-box">⭐ <span id="score">0</span></div>
+        <div class="stat-box">🚀 <span id="rockets">0</span></div>
+        <div class="stat-box">💰 <span id="coins">0</span></div>
+    </div>
+
+    <div id="leaderboard">
+        <div class="leaderboard-title">🏆 قائمة الأبطال</div>
+        <div id="list"></div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        // Database
+        var DB = { players: [], current: null };
+
+        // Save & Load
+        function save() { localStorage.setItem("game", JSON.stringify(DB)); }
+        function load() { var data = localStorage.getItem("game"); if(data) DB = JSON.parse(data); }
+
+        // Map Setup (Dark Theme)
+        var map = L.map('map', { zoomControl: false }).setView([20, 0], 2);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap contributors, © CARTO'
+        }).addTo(map);
+
+        var target = null;
+
+        // Draw Players
+        function draw() {
+            map.eachLayer(function(layer) {
+                if (layer instanceof L.Marker) map.removeLayer(layer);
+            });
+
+            DB.players.forEach(function(p) {
+                if (!p.lat) return;
+                
+                // Custom Icon based on if it's the current player or an enemy
+                var isMe = DB.current && p.name === DB.current.name;
+                
+                var marker = L.marker([p.lat, p.lng])
+                    .addTo(map)
+                    .bindPopup(`<b>👤 ${p.name}</b><br>⭐ Score: ${p.score}<br>${isMe ? '📍 موقعك' : '🎯 هدف'}`);
+
+                marker.on("click", function() {
+                    target = p;
+                    if(!isMe) {
+                        Swal.fire({
+                            title: 'تم تحديد الهدف!',
+                            text: `الهدف الحالي: ${p.name}`,
+                            icon: 'info',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 2000
+                        });
+                    }
+                });
+            });
+            updateLeaderboard();
+        }
+
+        // Login (Modern Modal)
+        async function login() {
+            const { value: name } = await Swal.fire({
+                title: 'سجل اسمك يا بطل',
+                input: 'text',
+                inputPlaceholder: 'اكتب اسمك هنا...',
+                background: '#1e272e',
+                color: '#fff',
+                confirmButtonColor: '#ff4757'
+            });
+
+            if (!name) return;
+
+            var player = DB.players.find(p => p.name == name);
+            if (player) {
+                DB.current = player;
+                Swal.fire({ title: 'أهلاً بعودتك!', text: `نورت يا ${name}`, icon: 'success', background: '#1e272e', color: '#fff', timer: 1500, showConfirmButton: false});
+            } else {
+                player = { id: Date.now(), name: name, lat: 0, lng: 0, score: 100, coins: 50, rockets: 3 };
+                DB.players.push(player);
+                DB.current = player;
+                Swal.fire({ title: 'تم التسجيل!', text: 'جاهز للحرب؟ 🚀', icon: 'success', background: '#1e272e', color: '#fff', timer: 1500, showConfirmButton: false});
+            }
+            save(); updateUI(); draw();
+        }
+
+        // Add Location
+        function addPlayer() {
+            if (!DB.current) {
+                Swal.fire('خطأ!', 'لازم تسجل دخول الأول يا بطل.', 'warning');
+                return;
+            }
+            Swal.fire({ title: 'حدد موقعك', text: 'اضغط على الخريطة لتحديد قاعدتك 📍', icon: 'info', background: '#1e272e', color: '#fff'});
+            
+            map.once("click", function(e) {
+                DB.current.lat = e.latlng.lat;
+                DB.current.lng = e.latlng.lng;
+                save(); draw();
+                Swal.fire({ title: 'تم!', text: 'تم تحديد موقع قاعدتك بنجاح.', icon: 'success', toast: true, position: 'top-end', showConfirmButton: false, timer: 2000});
+            });
+        }
+
+        // Earn Coins
+        function earnCoins() {
+            if (!DB.current) return;
+            DB.current.coins += 10;
+            save(); updateUI();
+            
+            // Small subtle notification
+            Swal.fire({ title: '+10 Coins', icon: 'success', toast: true, position: 'bottom-end', showConfirmButton: false, timer: 1000, background: '#2ed573', color: '#fff'});
+        }
+
+        // Buy Rocket (New Feature)
+        function buyRocket() {
+            if (!DB.current) return;
+            if (DB.current.coins >= 50) {
+                DB.current.coins -= 50;
+                DB.current.rockets += 1;
+                save(); updateUI();
+                Swal.fire({ title: 'تم الشراء!', text: 'اشتريت صاروخ جديد 🚀', icon: 'success', toast: true, position: 'top', showConfirmButton: false, timer: 1500});
+            } else {
+                Swal.fire('رصيد غير كافي', 'محتاج 50 كوين على الأقل عشان تشتري صاروخ! 💰', 'error');
+            }
+        }
+
+        // Launch Rocket
+        function launchRocket() {
+            if (!DB.current) { Swal.fire('خطأ!', 'سجل دخول الأول.', 'warning'); return; }
+            if (!target) { Swal.fire('اختر هدف!', 'لازم تضغط على لاعب على الخريطة عشان تضربه.', 'info'); return; }
+            if (target.name === DB.current.name) { Swal.fire('مجنون؟', 'هتضرب نفسك يا بطل؟ 😂', 'error'); return; }
+            if (DB.current.rockets <= 0) { Swal.fire('خلصت صواريخك!', 'اجمع كوينز واشتري صواريخ من المتجر.', 'error'); return; }
+
+            DB.current.rockets--;
+            target.score -= 20;
+            DB.current.score += 20;
+            
+            Swal.fire({
+                title: 'بـووووم! 💥',
+                text: `تم ضرب ${target.name} بنجاح! كسبت 20 نقطة.`,
+                icon: 'success',
+                background: '#1e272e', color: '#fff',
+                confirmButtonColor: '#ff4757'
+            });
+
+            save(); draw(); updateUI();
+        }
+
+        // Leaderboard
+        function updateLeaderboard() {
+            var list = document.getElementById("list");
+            list.innerHTML = "";
+            DB.players.sort((a, b) => b.score - a.score).forEach(function(p, index) {
+                let medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '🏅';
+                list.innerHTML += `<div class="player-row"><span>${medal} ${p.name}</span> <span>⭐ ${p.score}</span></div>`;
+            });
+        }
+
+        // UI
+        function updateUI() {
+            if (!DB.current) return;
+            document.getElementById("name").innerText = DB.current.name;
+            document.getElementById("score").innerText = DB.current.score;
+            document.getElementById("coins").innerText = DB.current.coins;
+            document.getElementById("rockets").innerText = DB.current.rockets;
+        }
+
+        // Init
+        load(); draw(); updateUI();
+    </script>
 </body>
-
 </html>

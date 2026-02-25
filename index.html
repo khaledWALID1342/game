@@ -1,29 +1,51 @@
 <!DOCTYPE html>
-<html>
+<html lang="ar">
 
 <head>
 
-<title>لعبتي العالمية</title>
+<meta charset="UTF-8">
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>World Rockets Game</title>
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
 
 <link rel="stylesheet"
 href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 
 <style>
 
-body {
+body{
 
 margin:0;
-background:black;
+background:#0b0f1a;
 color:white;
+font-family:Arial;
 text-align:center;
 
 }
 
-#map {
+#map{
 
 height:80vh;
+
+}
+
+#topbar{
+
+background:black;
+padding:10px;
+
+}
+
+button{
+
+padding:15px;
+font-size:18px;
+background:red;
+color:white;
+border:none;
+margin:10px;
 
 }
 
@@ -33,7 +55,17 @@ height:80vh;
 
 <body>
 
-<h2>🌍 خريطة اللعبة</h2>
+<div id="topbar">
+
+<h2>🌍 World Rockets Game</h2>
+
+<button onclick="addPlayer()">
+
+➕ أضف نفسك
+
+</button>
+
+</div>
 
 <div id="map"></div>
 
@@ -41,13 +73,103 @@ height:80vh;
 
 <script>
 
-var map = L.map('map').setView([30,31],3);
+//////////////////////////////////////////////////////
+// إنشاء الخريطة
+//////////////////////////////////////////////////////
+
+var map = L.map('map').setView([20,0],2);
 
 L.tileLayer(
 
 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
 
 ).addTo(map);
+
+//////////////////////////////////////////////////////
+// تحميل اللاعبين من التخزين
+//////////////////////////////////////////////////////
+
+var players = JSON.parse(
+localStorage.getItem("players")
+) || [];
+
+//////////////////////////////////////////////////////
+// عرض اللاعبين
+//////////////////////////////////////////////////////
+
+players.forEach(function(player){
+
+L.marker([
+
+player.lat,
+
+player.lng
+
+]).addTo(map)
+
+.bindPopup(
+
+"👤 " + player.name
+
+);
+
+});
+
+//////////////////////////////////////////////////////
+// إضافة لاعب جديد
+//////////////////////////////////////////////////////
+
+function addPlayer(){
+
+var name = prompt("اكتب اسمك");
+
+if(!name) return;
+
+map.once("click", function(e){
+
+var lat = e.latlng.lat;
+
+var lng = e.latlng.lng;
+
+var player = {
+
+name:name,
+
+lat:lat,
+
+lng:lng,
+
+score:0,
+
+rockets:0
+
+};
+
+players.push(player);
+
+localStorage.setItem(
+
+"players",
+
+JSON.stringify(players)
+
+);
+
+L.marker([lat,lng])
+
+.addTo(map)
+
+.bindPopup("👤 " + name);
+
+alert("تم إضافتك بنجاح");
+
+});
+
+alert("اضغط على مكان في الخريطة");
+
+}
+
+//////////////////////////////////////////////////////
 
 </script>
 

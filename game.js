@@ -1,31 +1,28 @@
-// ==========================================================================
-// 🚀 WORLD ROCKETS GAME - FINAL MMO ENGINE V4
-// ==========================================================================
+// ======================================================================
+// 🌍 WORLD ROCKETS — V5 ULTRA MMO ENGINE
+// ======================================================================
 
-import { initializeApp } from
-"https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 
 import {
 getDatabase,
 ref,
 onValue,
-set,
 update,
 get,
-push,
-remove
+push
 }
 from
 "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 
-// ==========================================================================
-// FIREBASE CONFIG
-// ==========================================================================
+// ======================================================================
+// FIREBASE
+// ======================================================================
 
 const firebaseConfig = {
 
-apiKey:"AIzaSyDNRQa...",
 databaseURL:
 "https://world-rockets-default-rtdb.firebaseio.com"
 
@@ -36,72 +33,31 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 
-// ==========================================================================
-// SERVER SYSTEM (FIXED)
-// ==========================================================================
+// ======================================================================
+// LOGIN SYSTEM
+// ======================================================================
 
-// ✅ قراءة السيرفر من auth.js
-let loginData =
-JSON.parse(localStorage.getItem("wr_login"));
-
-// لو مش مسجل دخول رجع للصفحة الأولى
-if(!loginData){
-
-window.location.href="index.html";
-
-}
-
-// تحديد السيرفر
-let currentServer =
-loginData.server || "server_1";
-
-function path(p){
-
-return `servers/${currentServer}/${p}`;
-
-}
-
-
-// ==========================================================================
-// AUTO LOGIN (FIXED)
-// ==========================================================================
-
-let currentPlayer=null;
-
-async function login(){
-
-let id =
-"player_"+loginData.name;
-
-let snap =
-await get(
-ref(db,path("players/"+id))
+const login =
+JSON.parse(
+localStorage.getItem("wr_login")
 );
 
-if(snap.exists()){
+if(!login){
 
-currentPlayer=snap.val();
-
-startGame();
-
-}
-else{
-
-alert("Session انتهت");
-
-window.location.href="index.html";
+location.href="index.html";
 
 }
 
-}
+const server = login.server;
 
-// تشغيل login مباشرة
-login();
+const myID = "player_"+login.name;
+
+let me=null;
 
 
-// ==========================================================================
-// MAP (FIXED)
-// ==========================================================================
+// ======================================================================
+// MAP SYSTEM
+// ======================================================================
 
 const map=L.map("map",{
 
@@ -109,7 +65,7 @@ zoomControl:false,
 
 minZoom:3,
 
-maxZoom:7,
+maxZoom:8,
 
 maxBounds:[
 [-85,-180],
@@ -118,21 +74,31 @@ maxBounds:[
 
 maxBoundsViscosity:1
 
-})
-
-.setView([20,0],3);
+}).setView([25,30],4);
 
 
 L.tileLayer(
 
-"https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+"https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png"
 
 ).addTo(map);
 
 
-// ==========================================================================
-// GAME START
-// ==========================================================================
+// ======================================================================
+// DATABASE PATH
+// ======================================================================
+
+function path(p){
+
+return
+`servers/${server}/${p}`;
+
+}
+
+
+// ======================================================================
+// GAME DATA
+// ======================================================================
 
 let players={};
 
@@ -141,22 +107,9 @@ let markers={};
 let territories={};
 
 
-function startGame(){
-
-listenPlayers();
-
-listenDM();
-
-updateHUD();
-
-}
-
-
-// ==========================================================================
-// PLAYERS LISTENER
-// ==========================================================================
-
-function listenPlayers(){
+// ======================================================================
+// LOAD PLAYERS
+// ======================================================================
 
 onValue(
 
@@ -164,88 +117,96 @@ ref(db,path("players")),
 
 snap=>{
 
-if(!snap.exists())return;
+if(!snap.exists()) return;
 
 players=snap.val();
 
-updateMarkers();
+me=players[myID];
 
-updateLeaderboard();
+updateHUD();
 
-// حماية لو العنصر مش موجود
-let onlineEl =
-document.getElementById("online-count");
+drawPlayers();
 
-if(onlineEl){
-
-onlineEl.innerText=
-Object.keys(players).length;
-
-}
-
-}
-
-);
-
-}
+});
 
 
-// ==========================================================================
-// MARKERS
-// ==========================================================================
+// ======================================================================
+// DRAW PLAYERS
+// ======================================================================
 
-function updateMarkers(){
+function drawPlayers(){
 
 for(let id in players){
 
 let p=players[id];
 
-if(!p.lat)continue;
+if(!p.lat) continue;
 
-let icon=L.divIcon({
 
-html:
-`<div style="
-background:${p.color};
-width:18px;
-height:18px;
-border-radius:50%;
-box-shadow:0 0 15px ${p.color}
-"></div>`
-
-});
+// marker
 
 if(!markers[id]){
 
 markers[id]=L.marker(
+
 [p.lat,p.lng],
-{icon}
-).addTo(map);
+
+{
+
+icon:L.divIcon({
+
+html:
+
+`<div style="
+
+width:18px;
+
+height:18px;
+
+background:${p.color};
+
+border-radius:50%;
+
+box-shadow:0 0 15px ${p.color};
+
+"></div>`
+
+})
+
+}).addTo(map);
+
 
 markers[id].onclick=()=>{
+
 playerMenu(p);
+
 };
 
 }
 
-markers[id].setLatLng(
-[p.lat,p.lng]
-);
+markers[id].setLatLng([p.lat,p.lng]);
 
 
 // territory
 
-let radius=p.score*15;
+let radius=p.score*20;
 
 if(!territories[id]){
 
 territories[id]=L.circle(
+
 [p.lat,p.lng],
+
 {
+
 radius,
+
 color:p.color,
-fillOpacity:.15
+
+fillOpacity:.1
+
 }
+
 ).addTo(map);
 
 }
@@ -257,17 +218,19 @@ territories[id].setRadius(radius);
 }
 
 
-// ==========================================================================
+// ======================================================================
 // PLAYER MENU
-// ==========================================================================
+// ======================================================================
 
 function playerMenu(p){
 
-if(p.id===currentPlayer.id)return;
+if(p.id===myID) return;
 
 Swal.fire({
 
 title:p.name,
+
+text:"اختر العملية",
 
 showDenyButton:true,
 
@@ -290,49 +253,93 @@ if(res.isDenied)
 sendDM(p);
 
 if(res.dismiss==="cancel")
-inviteClan(p);
+clanInvite(p);
 
 });
 
 }
 
 
-// ==========================================================================
-// ATTACK
-// ==========================================================================
+// ======================================================================
+// ATTACK SYSTEM
+// ======================================================================
 
 function attack(target){
 
-if(
-currentPlayer.clan &&
-currentPlayer.clan===target.clan
-){
+if(me.rockets<=0){
 
-alert("حليفك");
+alert("لا يوجد صواريخ");
 
 return;
 
 }
 
-realisticRocket(
-[currentPlayer.lat,currentPlayer.lng],
-[target.lat,target.lng]
+
+// consume rocket
+
+update(
+
+ref(db,path("players/"+myID)),
+
+{
+
+rockets:me.rockets-1
+
+}
+
 );
+
+
+// launch
+
+rocketAnimation(
+
+[me.lat,me.lng],
+
+[target.lat,target.lng]
+
+);
+
+
+// damage
+
+setTimeout(()=>{
+
+let damage=25;
+
+update(
+
+ref(db,path("players/"+target.id)),
+
+{
+
+health:target.health-damage
+
+}
+
+);
+
+},4000);
 
 }
 
 
-// ==========================================================================
-// REALISTIC ROCKET
-// ==========================================================================
+// ======================================================================
+// ROCKET ANIMATION
+// ======================================================================
 
-function realisticRocket(start,end){
+function rocketAnimation(start,end){
 
 let rocket=L.marker(start,{
+
 icon:L.divIcon({
+
 html:"🚀",
+
 iconSize:[40,40]
+
 })
+
 }).addTo(map);
 
 
@@ -341,9 +348,10 @@ let startTime=performance.now();
 
 function animate(t){
 
-let p=(t-startTime)/5000;
+let progress=(t-startTime)/4000;
 
-if(p>=1){
+
+if(progress>=1){
 
 explode(end);
 
@@ -354,44 +362,65 @@ return;
 }
 
 
-// curve
+// curved path
 
 let lat=
-start[0]+(end[0]-start[0])*p;
+
+start[0]+
+
+(end[0]-start[0])*progress;
 
 let lng=
-start[1]+(end[1]-start[1])*p;
 
-let arc=
-Math.sin(p*Math.PI)*10;
+start[1]+
 
-rocket.setLatLng(
-[lat+arc,lng]
-);
+(end[1]-start[1])*progress;
+
+
+// arc
+
+lat+=
+Math.sin(progress*Math.PI)*15;
+
+
+rocket.setLatLng([lat,lng]);
 
 
 // rotate
 
 let angle=
+
 Math.atan2(
+
 end[1]-lng,
+
 end[0]-lat
+
 )*180/Math.PI;
+
 
 rocket.getElement()
 .style.transform=
+
 `rotate(${angle}deg)`;
 
 
 // smoke
 
 L.circle(
+
 [lat,lng],
+
 {
-radius:20000,
+
+radius:15000,
+
 color:"orange",
-opacity:.4
+
+opacity:.3
+
 }
+
 ).addTo(map);
 
 
@@ -404,17 +433,22 @@ requestAnimationFrame(animate);
 }
 
 
-// ==========================================================================
+// ======================================================================
 // EXPLOSION
-// ==========================================================================
+// ======================================================================
 
 function explode(pos){
 
 let boom=L.circle(pos,{
-radius:100000,
+
+radius:80000,
+
 color:"red",
+
 fillOpacity:.5
+
 }).addTo(map);
+
 
 setTimeout(
 ()=>map.removeLayer(boom),
@@ -424,26 +458,39 @@ setTimeout(
 }
 
 
-// ==========================================================================
+// ======================================================================
 // DM SYSTEM
-// ==========================================================================
+// ======================================================================
 
 function sendDM(target){
 
 Swal.fire({
-title:"رسالة",
+
+title:"اكتب الرسالة",
+
 input:"text"
+
 })
+
 .then(res=>{
 
-if(!res.value)return;
+if(!res.value) return;
+
 
 push(
+
 ref(db,path("dm/"+target.id)),
+
 {
-from:currentPlayer.name,
-text:res.value
+
+from:login.name,
+
+text:res.value,
+
+time:Date.now()
+
 }
+
 );
 
 });
@@ -451,131 +498,108 @@ text:res.value
 }
 
 
-function listenDM(){
+// inbox listener
 
 onValue(
 
-ref(db,path("dm/"+currentPlayer.id)),
+ref(db,path("dm/"+myID)),
 
 snap=>{
 
-if(!snap.exists())return;
+if(!snap.exists()) return;
 
-let msgs=snap.val();
+let count=
+Object.keys(snap.val()).length;
 
-let msgEl =
+let el=
 document.getElementById("msg-count");
 
-if(msgEl){
-
-msgEl.innerText=
-Object.keys(msgs).length;
-
-}
-
-}
-
-);
-
-}
-
-
-// ==========================================================================
-// CLAN
-// ==========================================================================
-
-function inviteClan(p){
-
-update(
-ref(db,path("players/"+p.id)),
-{
-clan:currentPlayer.clan||
-currentPlayer.id
-}
-);
-
-}
-
-
-// ==========================================================================
-// HUD
-// ==========================================================================
-
-function updateHUD(){
-
-let coinsEl =
-document.getElementById("hud-coins");
-
-let healthEl =
-document.getElementById("hud-health");
-
-if(coinsEl)
-coinsEl.innerText=currentPlayer.coins;
-
-if(healthEl)
-healthEl.innerText=currentPlayer.health+"%";
-
-}
-
-
-// ==========================================================================
-// LEADERBOARD
-// ==========================================================================
-
-function updateLeaderboard(){
-
-let list=
-document.getElementById("leaderboard-list");
-
-if(!list)return;
-
-list.innerHTML="";
-
-Object.values(players)
-.sort((a,b)=>b.score-a.score)
-.forEach(p=>{
-
-list.innerHTML+=`
-<div class="leaderboard-item">
-${p.name}
-</div>
-`;
+if(el) el.innerText=count;
 
 });
 
+
+// ======================================================================
+// CLAN SYSTEM
+// ======================================================================
+
+function clanInvite(target){
+
+update(
+
+ref(db,path("players/"+target.id)),
+
+{
+
+clan:me.clan||myID
+
+}
+
+);
+
 }
 
 
-// ==========================================================================
-// LOCATE
-// ==========================================================================
+// ======================================================================
+// HUD
+// ======================================================================
 
-let locateBtn =
-document.getElementById("btn-locate");
+function updateHUD(){
 
-if(locateBtn){
+if(!me) return;
 
-locateBtn.onclick=()=>{
+setText("hud-health",me.health);
+
+setText("hud-coins",me.coins);
+
+setText("hud-rockets",me.rockets);
+
+}
+
+
+function setText(id,value){
+
+let el=
+document.getElementById(id);
+
+if(el) el.innerText=value;
+
+}
+
+
+// ======================================================================
+// BASE LOCATION
+// ======================================================================
+
+document
+
+.getElementById("btn-locate")
+
+.onclick=()=>{
 
 map.once("click",e=>{
 
 update(
-ref(db,path("players/"+currentPlayer.id)),
+
+ref(db,path("players/"+myID)),
+
 {
+
 lat:e.latlng.lat,
+
 lng:e.latlng.lng
+
 }
+
 );
 
 });
 
 };
 
-}
 
+// ======================================================================
+// READY
+// ======================================================================
 
-// ==========================================================================
-// DONE
-// ==========================================================================
-
-console.log("WORLD ROCKETS V4 READY");
+console.log("🌍 WORLD ROCKETS V5 ULTRA READY");

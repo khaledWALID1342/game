@@ -1,131 +1,450 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="World Rockets Game - النسخة العالمية الاحترافية">
-    <meta name="theme-color" content="#0d1117">
-    
-    <title>World Rockets | القيادة العليا 🚀</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<meta charset="UTF-8">
 
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
 
-    <link rel="stylesheet" href="style.css">
+<title>
+WORLD ROCKETS — Command Center
+</title>
+
+
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;600;900&display=swap" rel="stylesheet">
+
+
+<style>
+
+
+/* ===========================
+GLOBAL STYLE
+=========================== */
+
+body{
+
+margin:0;
+
+font-family:'Cairo';
+
+background:
+
+radial-gradient(circle at top,
+
+#020617,
+
+#000);
+
+color:white;
+
+height:100vh;
+
+display:flex;
+
+justify-content:center;
+
+align-items:center;
+
+overflow:hidden;
+
+}
+
+
+/* ===========================
+BACKGROUND EFFECT
+=========================== */
+
+body::before{
+
+content:"";
+
+position:absolute;
+
+width:200%;
+
+height:200%;
+
+background:
+
+linear-gradient(
+
+45deg,
+
+transparent,
+
+#00f0ff22,
+
+transparent
+
+);
+
+animation:scan 8s linear infinite;
+
+}
+
+
+@keyframes scan{
+
+0%{
+
+transform:translateY(-100%);
+
+}
+
+100%{
+
+transform:translateY(100%);
+
+}
+
+}
+
+
+/* ===========================
+MAIN PANEL
+=========================== */
+
+.panel{
+
+position:relative;
+
+width:420px;
+
+padding:40px;
+
+border-radius:20px;
+
+background:
+
+rgba(15,23,42,.85);
+
+backdrop-filter:blur(20px);
+
+box-shadow:
+
+0 0 40px #00f0ff44,
+
+inset 0 0 20px #00f0ff22;
+
+animation:fadeIn 1.5s;
+
+}
+
+
+@keyframes fadeIn{
+
+from{
+
+opacity:0;
+
+transform:translateY(30px);
+
+}
+
+to{
+
+opacity:1;
+
+transform:translateY(0);
+
+}
+
+}
+
+
+/* ===========================
+LOGO
+=========================== */
+
+.logo{
+
+font-size:32px;
+
+font-weight:900;
+
+text-align:center;
+
+margin-bottom:10px;
+
+background:
+
+linear-gradient(
+
+90deg,
+
+#00f0ff,
+
+#00ffa6
+
+);
+
+-webkit-background-clip:text;
+
+-webkit-text-fill-color:transparent;
+
+}
+
+
+/* ===========================
+SUBTITLE
+=========================== */
+
+.subtitle{
+
+text-align:center;
+
+color:#aaa;
+
+margin-bottom:30px;
+
+}
+
+
+/* ===========================
+INPUT
+=========================== */
+
+input,select{
+
+width:100%;
+
+padding:15px;
+
+margin-top:10px;
+
+border-radius:10px;
+
+border:none;
+
+background:#020617;
+
+color:white;
+
+font-size:16px;
+
+outline:none;
+
+box-shadow:
+
+inset 0 0 10px #00f0ff22;
+
+}
+
+
+input:focus{
+
+box-shadow:
+
+0 0 15px #00f0ff;
+
+}
+
+
+/* ===========================
+BUTTON
+=========================== */
+
+button{
+
+width:100%;
+
+padding:15px;
+
+margin-top:15px;
+
+border:none;
+
+border-radius:10px;
+
+font-size:18px;
+
+font-weight:bold;
+
+cursor:pointer;
+
+background:
+
+linear-gradient(
+
+90deg,
+
+#00f0ff,
+
+#00ffa6
+
+);
+
+color:black;
+
+transition:.3s;
+
+}
+
+
+button:hover{
+
+transform:scale(1.05);
+
+box-shadow:
+
+0 0 20px #00f0ff;
+
+}
+
+
+/* ===========================
+STATUS
+=========================== */
+
+.status{
+
+text-align:center;
+
+margin-top:20px;
+
+color:#00ffa6;
+
+font-size:14px;
+
+}
+
+
+/* ===========================
+FOOTER
+=========================== */
+
+.footer{
+
+position:absolute;
+
+bottom:10px;
+
+width:100%;
+
+text-align:center;
+
+font-size:12px;
+
+color:#555;
+
+}
+
+
+</style>
+
 </head>
+
+
+
 <body>
 
-    <div id="server-overlay" class="overlay active">
-        <div class="server-modal">
-            <div class="logo-large">🌍 WORLD ROCKETS</div>
-            <h3>إدارة العمليات المركزية</h3>
-            
-            <div class="server-selection">
-                <label>اختر سيرفر الحرب:</label>
-                <select id="select-server">
-                    <option value="server_1">السيرفر الأول: الشرق الأوسط (حي)</option>
-                    <option value="server_2">السيرفر الثاني: أوروبا (متاح)</option>
-                    <option value="server_3">السيرفر الثالث: أمريكا (متاح)</option>
-                </select>
-            </div>
 
-            <div class="auth-section">
-                <button id="btn-auth-main" class="btn-glow main-login">
-                    <i class="fa-solid fa-shield-halved"></i> تسجيل دخول آمن
-                </button>
-            </div>
-            
-            <div class="server-status">
-                <span class="pulse-icon"></span> المتصلون الآن: <span id="online-count">...</span>
-            </div>
-        </div>
-    </div>
 
-    <div id="loading-screen">
-        <div class="loader-content">
-            <i class="fa-solid fa-satellite-dish fa-spin fa-3x" style="color: #ffa502;"></i>
-            <h2>جاري تشفير الاتصال وتحديث الخرائط...</h2>
-            <div class="progress-bar"><div id="loading-progress"></div></div>
-        </div>
-    </div>
+<div class="panel">
 
-    <header id="game-header">
-        <div class="logo">
-            <i class="fa-solid fa-earth-americas"></i> <span>World Rockets</span>
-        </div>
-        
-        <div class="player-stats-container">
-            <div class="stat-badge health" title="صحة القاعدة">
-                <i class="fa-solid fa-heart"></i> <span id="hud-health">100%</span>
-            </div>
-            <div class="stat-badge coins" title="الذهب">
-                <i class="fa-solid fa-coins"></i> <span id="hud-coins">0</span>
-            </div>
-            <div class="stat-badge rockets" title="الترسانة">
-                <i class="fa-solid fa-rocket"></i> <span id="hud-rockets">0</span>
-            </div>
-            <div class="stat-badge alliance" title="التحالف">
-                <i class="fa-solid fa-users-rays"></i> <span id="hud-alliance">مستقل</span>
-            </div>
-        </div>
 
-        <div class="top-actions">
-            <button id="btn-inbox" class="btn-icon pulse" title="الرسائل">
-                <i class="fa-solid fa-envelope"></i>
-                <span class="badge-count" id="msg-count">0</span>
-            </button>
-            <button id="btn-settings" class="btn-icon"><i class="fa-solid fa-gear"></i></button>
-        </div>
-    </header>
+<div class="logo">
 
-    <main id="game-container">
-        <div id="map"></div>
+WORLD ROCKETS
 
-        <div id="kill-feed" class="notifications-area"></div>
+</div>
 
-        <div class="floating-controls">
-            <button id="btn-locate" class="btn-float btn-primary" title="نشر القاعدة">
-                <i class="fa-solid fa-location-dot"></i>
-            </button>
-            <button id="btn-collect-coins" class="btn-float btn-success" title="تجميع موارد">
-                <i class="fa-solid fa-sack-dollar"></i>
-            </button>
-            <button id="btn-alliances" class="btn-float btn-info" title="التحالفات">
-                <i class="fa-solid fa-handshake"></i>
-            </button>
-            <button id="btn-quests" class="btn-float btn-secondary" title="المهمات التكتيكية">
-                <i class="fa-solid fa-scroll"></i>
-            </button>
-            <button id="btn-shop" class="btn-float btn-warning" title="السوق الأسود">
-                <i class="fa-solid fa-cart-shopping"></i>
-            </button>
-        </div>
-    </main>
 
-    <aside id="leaderboard-panel" class="panel-glass collapsed">
-        <h3 class="panel-title"><i class="fa-solid fa-crown"></i> تصنيف القادة</h3>
-        <div id="leaderboard-list" class="scrollable-list">
-            <div class="loading-text">جاري الاتصال بالسيرفر...</div>
-        </div>
-    </aside>
+<div class="subtitle">
 
-    <div id="audio-manager" style="display: none;">
-        <audio id="sfx-launch" src="assets/launch.mp3" preload="auto"></audio>
-        <audio id="sfx-explosion" src="assets/explosion.mp3" preload="auto"></audio>
-        <audio id="sfx-coin" src="assets/coin.mp3" preload="auto"></audio>
-        <audio id="sfx-alert" src="assets/alert.mp3" preload="auto"></audio>
-    </div>
+القيادة العسكرية العالمية
 
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</div>
 
-    <script type="module" src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
-    <script type="module" src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js"></script>
 
-    <script type="module" src="game.js"></script>
+
+<select id="server">
+
+<option value="server_1">
+
+🌍 الشرق الأوسط
+
+</option>
+
+<option value="server_2">
+
+🇪🇺 أوروبا
+
+</option>
+
+<option value="server_3">
+
+🇺🇸 أمريكا
+
+</option>
+
+</select>
+
+
+
+<input
+
+id="name"
+
+placeholder="اسم القائد"
+
+>
+
+
+
+<input
+
+id="password"
+
+type="password"
+
+placeholder="كلمة المرور"
+
+>
+
+
+
+<button onclick="register()">
+
+إنشاء حساب جديد
+
+</button>
+
+
+
+<button onclick="login()">
+
+تسجيل الدخول
+
+</button>
+
+
+
+<div class="status" id="status">
+
+Secure Military Connection Ready
+
+</div>
+
+
+</div>
+
+
+
+<div class="footer">
+
+World Rockets Command © 2026
+
+</div>
+
+
+
+<script type="module" src="auth.js"></script>
+
+
 
 </body>
+
 </html>

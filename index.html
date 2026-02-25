@@ -3,70 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="World Rockets Game - لعبة حروب الصواريخ الاستراتيجية المباشرة">
+    <meta name="description" content="World Rockets Game - النسخة العالمية الاحترافية">
     <meta name="theme-color" content="#0d1117">
     
-    <title>World Rockets Game | النسخة العالمية 🚀</title>
+    <title>World Rockets | القيادة العليا 🚀</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div id="loading-screen" class="active">
+    <div id="server-overlay" class="overlay active">
+        <div class="server-modal">
+            <div class="logo-large">🌍 WORLD ROCKETS</div>
+            <h3>إدارة العمليات المركزية</h3>
+            
+            <div class="server-selection">
+                <label>اختر سيرفر الحرب:</label>
+                <select id="select-server">
+                    <option value="server_1">السيرفر الأول: الشرق الأوسط (حي)</option>
+                    <option value="server_2">السيرفر الثاني: أوروبا (متاح)</option>
+                    <option value="server_3">السيرفر الثالث: أمريكا (متاح)</option>
+                </select>
+            </div>
+
+            <div class="auth-section">
+                <button id="btn-auth-main" class="btn-glow main-login">
+                    <i class="fa-solid fa-shield-halved"></i> تسجيل دخول آمن
+                </button>
+            </div>
+            
+            <div class="server-status">
+                <span class="pulse-icon"></span> المتصلون الآن: <span id="online-count">...</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="loading-screen">
         <div class="loader-content">
-            <i class="fa-solid fa-rocket fa-bounce fa-3x" style="color: #ff4757;"></i>
-            <h2>جاري الاتصال بالسيرفر العالمي...</h2>
+            <i class="fa-solid fa-satellite-dish fa-spin fa-3x" style="color: #ffa502;"></i>
+            <h2>جاري تشفير الاتصال وتحديث الخرائط...</h2>
             <div class="progress-bar"><div id="loading-progress"></div></div>
         </div>
     </div>
 
     <header id="game-header">
         <div class="logo">
-            <i class="fa-solid fa-earth-americas"></i> World Rockets
+            <i class="fa-solid fa-earth-americas"></i> <span>World Rockets</span>
         </div>
         
         <div class="player-stats-container">
-            <div class="stat-badge health" title="مستوى الصحة">
+            <div class="stat-badge health" title="صحة القاعدة">
                 <i class="fa-solid fa-heart"></i> <span id="hud-health">100%</span>
             </div>
-            <div class="stat-badge shield" title="الدروع النشطة">
-                <i class="fa-solid fa-shield-halved"></i> <span id="hud-shield">0</span>
-            </div>
-            <div class="stat-badge coins" title="العملات">
+            <div class="stat-badge coins" title="الذهب">
                 <i class="fa-solid fa-coins"></i> <span id="hud-coins">0</span>
             </div>
-            <div class="stat-badge rockets" title="الصواريخ المتاحة">
+            <div class="stat-badge rockets" title="الترسانة">
                 <i class="fa-solid fa-rocket"></i> <span id="hud-rockets">0</span>
+            </div>
+            <div class="stat-badge alliance" title="التحالف">
+                <i class="fa-solid fa-users-rays"></i> <span id="hud-alliance">مستقل</span>
             </div>
         </div>
 
         <div class="top-actions">
-            <button id="btn-auth" class="btn-glow"><i class="fa-solid fa-right-to-bracket"></i> دخول/تسجيل</button>
+            <button id="btn-inbox" class="btn-icon pulse" title="الرسائل">
+                <i class="fa-solid fa-envelope"></i>
+                <span class="badge-count" id="msg-count">0</span>
+            </button>
             <button id="btn-settings" class="btn-icon"><i class="fa-solid fa-gear"></i></button>
         </div>
     </header>
 
     <main id="game-container">
-        
         <div id="map"></div>
 
-        <div id="kill-feed" class="notifications-area">
-            </div>
+        <div id="kill-feed" class="notifications-area"></div>
 
         <div class="floating-controls">
-            <button id="btn-locate" class="btn-float btn-primary" title="تحديد قاعدتي">
-                <i class="fa-solid fa-location-crosshairs"></i>
+            <button id="btn-locate" class="btn-float btn-primary" title="نشر القاعدة">
+                <i class="fa-solid fa-location-dot"></i>
             </button>
             <button id="btn-collect-coins" class="btn-float btn-success" title="تجميع موارد">
                 <i class="fa-solid fa-sack-dollar"></i>
+            </button>
+            <button id="btn-alliances" class="btn-float btn-info" title="التحالفات">
+                <i class="fa-solid fa-handshake"></i>
+            </button>
+            <button id="btn-quests" class="btn-float btn-secondary" title="المهمات التكتيكية">
+                <i class="fa-solid fa-scroll"></i>
             </button>
             <button id="btn-shop" class="btn-float btn-warning" title="السوق الأسود">
                 <i class="fa-solid fa-cart-shopping"></i>
@@ -74,10 +105,10 @@
         </div>
     </main>
 
-    <aside id="leaderboard-panel" class="panel-glass">
-        <h3 class="panel-title"><i class="fa-solid fa-trophy"></i> تصنيف القادة</h3>
+    <aside id="leaderboard-panel" class="panel-glass collapsed">
+        <h3 class="panel-title"><i class="fa-solid fa-crown"></i> تصنيف القادة</h3>
         <div id="leaderboard-list" class="scrollable-list">
-            <div class="loading-text">جاري جلب البيانات...</div>
+            <div class="loading-text">جاري الاتصال بالسيرفر...</div>
         </div>
     </aside>
 
@@ -85,6 +116,7 @@
         <audio id="sfx-launch" src="assets/launch.mp3" preload="auto"></audio>
         <audio id="sfx-explosion" src="assets/explosion.mp3" preload="auto"></audio>
         <audio id="sfx-coin" src="assets/coin.mp3" preload="auto"></audio>
+        <audio id="sfx-alert" src="assets/alert.mp3" preload="auto"></audio>
     </div>
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>

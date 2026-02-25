@@ -8,6 +8,9 @@
 <meta name="viewport"
 content="width=device-width, initial-scale=1.0">
 
+<!-- ✅ إضافة مهمة لتحسين التوافق -->
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+
 <title>
 WORLD ROCKETS — Command Center
 </title>
@@ -390,6 +393,8 @@ id="name"
 
 placeholder="اسم القائد"
 
+autocomplete="off"
+
 >
 
 
@@ -402,11 +407,15 @@ type="password"
 
 placeholder="كلمة المرور"
 
+autocomplete="off"
+
 >
 
 
 
-<button onclick="register()">
+<!-- ✅ إضافة type="button" لمنع أي سلوك افتراضي -->
+
+<button type="button" onclick="register()">
 
 إنشاء حساب جديد
 
@@ -414,7 +423,7 @@ placeholder="كلمة المرور"
 
 
 
-<button onclick="login()">
+<button type="button" onclick="login()">
 
 تسجيل الدخول
 
@@ -441,7 +450,8 @@ World Rockets Command © 2026
 
 
 
-<script type="module" src="auth.js"></script>
+<!-- ✅ السطر المطلوب لتشغيل نظام الدخول -->
+<script type="module" src="./auth.js"></script>
 
 
 

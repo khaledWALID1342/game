@@ -1,7 +1,7 @@
 /* ==========================================================================
    1. CSS Variables (متغيرات الألوان والمسافات الاحترافية)
    ========================================================================== */
-   :root {
+:root {
     /* الألوان الأساسية - ستايل سايبر بانك/فضاء */
     --bg-dark: #070b14;
     --bg-panel: rgba(15, 23, 42, 0.75);
@@ -123,6 +123,7 @@ body {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     filter: drop-shadow(0 0 8px rgba(255, 71, 87, 0.4));
+    transition: var(--transition-fast);
 }
 
 /* عدادات اللاعب (Stats Badges) */
@@ -293,6 +294,12 @@ body {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    transition: transform var(--transition-smooth); /* أنيميشن التصغير والتكبير */
+}
+
+/* حالة التصغير (بينزل لتحت وبيسيب العنوان بس) */
+#leaderboard-panel.collapsed {
+    transform: translateY(calc(100% - 54px));
 }
 
 .panel-title {
@@ -302,6 +309,13 @@ body {
     font-size: 1.1rem;
     color: var(--accent-gold);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    cursor: pointer; /* بيغير شكل الماوس لإيد عشان يتعرف إنه زرار */
+    transition: background-color var(--transition-fast);
+}
+
+/* تأثير خفيف لما تقف على العنوان */
+.panel-title:hover {
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .scrollable-list {
@@ -366,12 +380,12 @@ body {
     
     #leaderboard-panel {
         width: 90%;
-        height: 25vh;
+        height: 25vh; /* ارتفاع مناسب للموبايل */
         bottom: 10px;
         right: 5%;
     }
 
-    .floating-controls { bottom: 30vh; left: 10px; transform: scale(0.85); }
+    .floating-controls { bottom: 25vh; left: 10px; transform: scale(0.85); }
     
     #kill-feed { width: 200px; font-size: 0.75rem; }
 }

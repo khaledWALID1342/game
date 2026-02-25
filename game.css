@@ -1,1 +1,232 @@
+/* ==========================================================================
+   🎨 THE GRAPHICS & ANIMATION ENGINE (V6.0 - CYBER-MILITARY)
+   ========================================================================== */
 
+:root {
+    /* باليتة الألوان العسكرية والسايبر بانك */
+    --neon-red: #ff4757;
+    --neon-blue: #1e90ff;
+    --neon-green: #2ed573;
+    --neon-gold: #ffa502;
+    --cyber-bg: #070b14;
+    --panel-bg: rgba(13, 17, 23, 0.85);
+    
+    /* تأثيرات الزجاج والماتريال */
+    --glass-border: 1px solid rgba(255, 255, 255, 0.08);
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+    --glow-spread: 0 0 15px;
+
+    /* الخطوط */
+    --font-ui: 'Cairo', sans-serif;
+    --font-tech: 'Orbitron', sans-serif; /* للغة الأرقام والعدادات */
+}
+
+/* ==========================================
+   1. الهيكل الأساسي وتصفير الأبعاد
+   ========================================== */
+* { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+body.cyber-theme {
+    background-color: var(--cyber-bg);
+    color: #fff;
+    font-family: var(--font-ui);
+    overflow: hidden;
+    width: 100vw; height: 100vh;
+}
+
+/* ==========================================
+   2. شاشة البوت والاتصال (BOOT SCREEN)
+   ========================================== */
+.overlay-fullscreen {
+    position: fixed; inset: 0;
+    background: radial-gradient(circle at center, #111827 0%, #000 100%);
+    z-index: 9999;
+    display: flex; justify-content: center; align-items: center;
+    transition: opacity 0.8s ease-in-out;
+}
+.overlay-fullscreen.hidden { opacity: 0; pointer-events: none; }
+
+.cyber-container { text-align: center; width: 100%; max-width: 500px; padding: 20px; }
+
+/* تأثير التشويش (Cyberpunk Glitch) */
+.glitch-text {
+    font-family: var(--font-tech);
+    font-size: 3rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    position: relative;
+    color: #fff;
+    text-shadow: 0 0 10px var(--neon-red);
+}
+.glitch-text::before, .glitch-text::after {
+    content: attr(data-text);
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: transparent;
+}
+.glitch-text::before {
+    left: 2px; text-shadow: -2px 0 var(--neon-blue);
+    animation: glitch-anim 2s infinite linear alternate-reverse;
+}
+.glitch-text::after {
+    left: -2px; text-shadow: -2px 0 var(--neon-red);
+    animation: glitch-anim-2 3s infinite linear alternate-reverse;
+}
+
+/* لوحة السيرفرات */
+.cyber-panel {
+    background: var(--panel-bg);
+    border: var(--glass-border);
+    border-radius: 12px;
+    padding: 25px;
+    margin-top: 30px;
+    box-shadow: var(--glass-shadow);
+    backdrop-filter: blur(10px);
+}
+.server-list { display: flex; flex-direction: column; gap: 10px; margin: 20px 0; }
+.server-card {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 15px; background: rgba(255,255,255,0.05);
+    border: 1px solid transparent; border-radius: 8px;
+    cursor: pointer; transition: 0.3s;
+}
+.server-card:hover { background: rgba(255,255,255,0.1); }
+.server-card input[type="radio"]:checked + .server-info { color: var(--neon-blue); font-weight: bold; }
+.server-card.optimal { border-color: var(--neon-green); box-shadow: inset 0 0 10px rgba(46, 213, 115, 0.2); }
+
+/* مدخلات وأزرار الهاكرز */
+.cyber-input {
+    width: 100%; padding: 12px; margin-bottom: 15px;
+    background: rgba(0,0,0,0.5); border: 1px solid var(--neon-blue);
+    color: var(--neon-green); font-family: var(--font-tech);
+    border-radius: 5px; outline: none; text-align: center;
+}
+.cyber-input:focus { box-shadow: 0 0 15px rgba(30, 144, 255, 0.4); }
+
+.cyber-button.primary {
+    width: 100%; padding: 15px; background: transparent;
+    border: 2px solid var(--neon-blue); color: var(--neon-blue);
+    font-weight: bold; font-size: 1.1rem; border-radius: 8px;
+    cursor: pointer; transition: 0.3s; position: relative; overflow: hidden;
+}
+.cyber-button.primary:hover { background: var(--neon-blue); color: #fff; box-shadow: var(--glow-spread) var(--neon-blue); }
+
+/* حالات الزرار أثناء الاتصال */
+.cyber-button.scanning { border-color: var(--neon-gold); color: var(--neon-gold); pointer-events: none; }
+.cyber-button.authorized { border-color: var(--neon-green); background: var(--neon-green); color: #fff; box-shadow: var(--glow-spread) var(--neon-green); }
+.glitch-active { animation: ui-glitch 0.3s forwards; }
+
+/* ==========================================
+   3. واجهة المستخدم (HUD & DASHBOARDS)
+   ========================================== */
+#main-hud { position: absolute; inset: 0; pointer-events: none; z-index: 4000; }
+#main-hud.active-hud { pointer-events: auto; }
+
+/* الشريط العلوي */
+.hud-top {
+    position: absolute; top: 0; width: 100%;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 20px; background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, transparent 100%);
+}
+.brand-zone { font-family: var(--font-tech); font-size: 1.2rem; color: var(--neon-red); display: flex; align-items: center; gap: 8px; }
+.live-indicator { background: var(--neon-red); color: #000; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; animation: blink 1s infinite; }
+
+.stats-zone { display: flex; gap: 15px; }
+.stat-box {
+    background: var(--panel-bg); border: var(--glass-border); padding: 5px 15px;
+    border-radius: 20px; display: flex; align-items: center; gap: 8px; backdrop-filter: blur(5px);
+}
+.stat-box.health .stat-icon { color: var(--neon-green); }
+.stat-box.energy .stat-icon { color: var(--neon-blue); }
+.stat-value { font-family: var(--font-tech); font-weight: bold; }
+.stat-bar-bg { width: 50px; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
+.stat-bar-fill { height: 100%; background: var(--neon-green); transition: width 0.4s ease, background-color 0.4s ease; }
+
+/* ==========================================
+   4. المحرك الفيزيائي للأنيميشن (KEYFRAMES PHYSICS) 🌋
+   ========================================== */
+/* رجة الكاميرا (Camera Shake) */
+.shake-light { animation: shake-map 0.3s cubic-bezier(.36,.07,.19,.97) both; }
+.shake-heavy { animation: shake-map-heavy 0.8s cubic-bezier(.36,.07,.19,.97) both; filter: contrast(1.5) saturate(1.5); }
+
+@keyframes shake-map {
+    0%, 100% { transform: translate3d(0, 0, 0); }
+    25% { transform: translate3d(-5px, 5px, 0); }
+    50% { transform: translate3d(5px, -5px, 0); }
+    75% { transform: translate3d(-5px, -5px, 0); }
+}
+@keyframes shake-map-heavy {
+    0%, 100% { transform: translate3d(0, 0, 0); }
+    10%, 30%, 50%, 70%, 90% { transform: translate3d(-15px, 15px, 0) rotate(-1deg); }
+    20%, 40%, 60%, 80% { transform: translate3d(15px, -15px, 0) rotate(1deg); }
+}
+
+/* الانفجار النووي (Nuke Shockwave) */
+.nuke-explosion { position: relative; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
+.mushroom-cloud { font-size: 80px; z-index: 2; animation: nuke-rise 2s ease-out forwards; text-shadow: 0 0 50px #ff4757; }
+.shockwave {
+    position: absolute; border: 5px solid var(--neon-red); border-radius: 50%;
+    width: 10px; height: 10px; z-index: 1; box-shadow: inset 0 0 50px var(--neon-red), 0 0 50px var(--neon-red);
+    animation: blast-wave 1.5s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+
+@keyframes nuke-rise {
+    0% { transform: scale(0.1) translateY(50px); opacity: 0; filter: brightness(3); }
+    20% { opacity: 1; filter: brightness(2); }
+    100% { transform: scale(1.5) translateY(-50px); opacity: 0; filter: brightness(1); }
+}
+@keyframes blast-wave {
+    0% { transform: scale(1); opacity: 1; border-width: 20px; }
+    100% { transform: scale(40); opacity: 0; border-width: 1px; }
+}
+
+/* ==========================================
+   5. مسح الرادار الذكي (AI Radar Sweep) 📡
+   ========================================== */
+.radar-scan-effect {
+    position: absolute; inset: 0; z-index: 2000; pointer-events: none;
+    background: 
+        radial-gradient(circle at center, rgba(46, 213, 115, 0.1) 0%, transparent 60%),
+        repeating-radial-gradient(transparent, transparent 40px, rgba(46, 213, 115, 0.2) 41px);
+}
+.radar-scan-effect::before {
+    content: ''; position: absolute; top: 50%; left: 50%; width: 200vw; height: 200vh;
+    margin-top: -100vh; margin-left: -100vw;
+    background: conic-gradient(from 0deg, transparent 70%, rgba(46, 213, 115, 0.5) 100%);
+    border-radius: 50%; animation: radar-sweep 2s linear infinite;
+}
+
+@keyframes radar-sweep { 100% { transform: rotate(360deg); } }
+
+/* ==========================================
+   6. تأثيرات الشفرات (Glitch Keyframes)
+   ========================================== */
+@keyframes glitch-anim {
+    0% { clip-path: inset(20% 0 80% 0); }
+    20% { clip-path: inset(60% 0 10% 0); }
+    40% { clip-path: inset(40% 0 50% 0); }
+    60% { clip-path: inset(80% 0 5% 0); }
+    80% { clip-path: inset(10% 0 70% 0); }
+    100% { clip-path: inset(30% 0 40% 0); }
+}
+@keyframes glitch-anim-2 {
+    0% { clip-path: inset(10% 0 60% 0); }
+    20% { clip-path: inset(30% 0 20% 0); }
+    40% { clip-path: inset(70% 0 10% 0); }
+    60% { clip-path: inset(20% 0 50% 0); }
+    80% { clip-path: inset(50% 0 30% 0); }
+    100% { clip-path: inset(5% 0 80% 0); }
+}
+@keyframes ui-glitch {
+    0% { transform: translate(0) skew(0deg); filter: hue-rotate(0deg); }
+    20% { transform: translate(-5px, 2px) skew(-10deg); filter: hue-rotate(90deg); }
+    40% { transform: translate(5px, -2px) skew(10deg); filter: hue-rotate(-90deg); }
+    60% { transform: translate(-2px, 5px) skew(0deg); filter: hue-rotate(0deg); }
+    80% { transform: translate(2px, -5px) skew(5deg); filter: hue-rotate(45deg); }
+    100% { transform: translate(0) skew(0deg); filter: hue-rotate(0deg); }
+}
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+/* ==========================================
+   7. الخريطة وحاويتها (Map Layer)
+   ========================================== */
+#map-wrapper { position: absolute; inset: 0; z-index: 1000; overflow: hidden; background: #000; }
+#map { width: 100%; height: 100%; filter: contrast(1.2) saturate(1.3) brightness(0.8); } /* فلاتر سينمائية */

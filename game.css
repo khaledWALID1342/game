@@ -1,5 +1,5 @@
 /* ==========================================================================
-   🎨 THE ULTIMATE CYBERPUNK UI ENGINE (V7.0 - MOBILE FOCUSED)
+   🎨 THE ULTIMATE CYBERPUNK UI ENGINE (V8.5 - SCOUT & RADAR ACTIVE)
    ========================================================================== */
 
 :root {
@@ -19,12 +19,14 @@ body { background: #000; overflow: hidden; width: 100vw; height: 100vh; }
    1. الخريطة والرادار (تحت كل حاجة)
    ========================================== */
 #map-wrapper { position: fixed; inset: 0; z-index: 1; width: 100vw; height: 100vh; background: #050505; }
-#map { width: 100%; height: 100%; filter: contrast(1.1) saturate(1.2) brightness(0.8); }
+
+/* 💡 تم تفتيح الخريطة لدرجة 1.2 لتبدو أوضح */
+#map { width: 100%; height: 100%; filter: contrast(1.1) saturate(1.2) brightness(1.2); }
 
 /* الرادار - لا يمنع اللمس أبدًا */
 #radar-overlay {
     position: fixed; inset: 0; z-index: 5;
-    pointer-events: none !important; /* هذا السطر يمنع الرادار من حجب الخريطة */
+    pointer-events: none !important;
     opacity: 0; transition: opacity 0.5s;
     background: repeating-radial-gradient(rgba(16, 172, 132, 0.1), transparent 50px);
 }
@@ -38,23 +40,21 @@ body { background: #000; overflow: hidden; width: 100vw; height: 100vh; }
 @keyframes scan { 100% { transform: translate(-50%, -50%) rotate(360deg); } }
 
 /* ==========================================
-   2. الواجهة الرئيسية (HUD) - تسمح بلمس الخريطة
+   2. الواجهة الرئيسية (HUD)
    ========================================== */
 #main-hud {
     position: fixed; inset: 0; z-index: 100;
-    pointer-events: none; /* الواجهة لا تمنع اللمس... */
+    pointer-events: none; 
     display: flex; flex-direction: column; justify-content: space-between;
 }
-/* ...لكن عناصر الواجهة نفسها قابلة للمس */
 #main-hud > * { pointer-events: auto; } 
 
-/* الشريط العلوي (Top Bar) */
 .hud-top {
     display: flex; justify-content: space-between; align-items: flex-start;
     padding: 10px; background: linear-gradient(180deg, rgba(0,0,0,0.9), transparent);
     width: 100%; flex-wrap: wrap; gap: 10px;
 }
-.brand-zone { display: none; } /* إخفاء اللوجو لتوفير مساحة على الموبايل */
+.brand-zone { display: none; } 
 
 .stats-zone {
     display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; width: 100%;
@@ -78,25 +78,26 @@ body { background: #000; overflow: hidden; width: 100vw; height: 100vh; }
     padding: 10px; border-radius: 8px; width: 160px;
     box-shadow: 0 0 20px rgba(0, 210, 211, 0.2);
     backdrop-filter: blur(5px);
-    pointer-events: auto; /* مهم للضغط */
+    pointer-events: auto; 
 }
 .left-panel { position: absolute; left: 10px; top: 60px; border-left: 3px solid var(--neon-blue); }
 .right-panel { position: absolute; right: 10px; top: 60px; border-right: 3px solid var(--neon-gold); }
 
-.panel-header { font-size: 0.8rem; color: var(--neon-blue); font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; margin-bottom: 5px; }
+.panel-header { font-size: 0.8rem; color: var(--neon-blue); font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;}
+.minimize-btn { background: transparent; border: none; color: var(--neon-blue); cursor: pointer; }
+
 .ai-chat-box { height: 60px; overflow-y: auto; font-size: 0.7rem; color: #fff; margin-bottom: 5px; }
 .ai-msg { margin-bottom: 3px; border-left: 2px solid var(--neon-green); padding-left: 5px; }
 
-/* أزرار القوائم (تصميم احترافي) */
 .ai-btn, .tab-btn, .cyber-button.small {
     width: 100%; padding: 6px; margin-top: 5px;
     background: rgba(0, 210, 211, 0.1); border: 1px solid var(--neon-blue);
     color: #fff; border-radius: 4px; font-size: 0.75rem; cursor: pointer; transition: 0.2s;
 }
-.ai-btn:active, .tab-btn:active { background: var(--neon-blue); transform: scale(0.95); }
+.ai-btn:active, .tab-btn.active { background: var(--neon-blue); color: #000; transform: scale(0.95); }
 
 /* ==========================================
-   4. شريط الأكشن السفلي (Action Bar) - أنيميشن خارق
+   4. شريط الأكشن السفلي (Action Bar)
    ========================================== */
 #action-bar {
     background: var(--bg-glass); border-top: var(--border-glass);
@@ -120,11 +121,9 @@ body { background: #000; overflow: hidden; width: 100vw; height: 100vh; }
     border-radius: 12px; border: 1px solid transparent; transition: 0.3s;
 }
 
-/* تأثير الضغط المرعب */
 .action-btn:hover i { color: #fff; border-color: rgba(255,255,255,0.3); }
 .action-btn:active i { transform: scale(0.8); background: var(--neon-blue); border-color: var(--neon-blue); box-shadow: 0 0 20px var(--neon-blue); color: #000; }
 
-/* زر الهجوم الرئيسي (مميز) */
 .primary-action { color: var(--neon-red); transform: translateY(-10px); }
 .primary-action i {
     background: rgba(255, 71, 87, 0.1); border-color: var(--neon-red);
@@ -133,7 +132,6 @@ body { background: #000; overflow: hidden; width: 100vw; height: 100vh; }
     animation: pulse-red 2s infinite;
 }
 .primary-action:active i { transform: scale(0.9); background: var(--neon-red); color: #fff; box-shadow: 0 0 30px var(--neon-red); }
-
 @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(255, 71, 87, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0); } }
 
 /* ==========================================
@@ -143,11 +141,34 @@ body { background: #000; overflow: hidden; width: 100vw; height: 100vh; }
 .combat-msg { background: rgba(0,0,0,0.8); border: 1px solid var(--neon-red); padding: 5px 10px; border-radius: 20px; font-size: 0.7rem; margin-bottom: 5px; text-align: center; color: #fff; animation: slideDown 0.3s ease-out; }
 @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-/* شاشة التحميل والدخول */
-.cyber-panel { background: var(--bg-glass); border: var(--border-glass); padding: 20px; border-radius: 12px; }
-.cyber-input { width: 100%; padding: 12px; margin-bottom: 10px; background: #000; border: 1px solid var(--neon-blue); color: var(--neon-blue); border-radius: 5px; outline: none; text-align: center; font-weight: bold; }
-.cyber-button.primary { width: 100%; padding: 12px; background: rgba(0, 210, 211, 0.1); border: 1px solid var(--neon-blue); color: var(--neon-blue); font-weight: bold; border-radius: 5px; cursor: pointer; transition: 0.3s; }
-.cyber-button.primary:active { background: var(--neon-blue); color: #000; box-shadow: 0 0 20px var(--neon-blue); }
+/* ==========================================
+   6. 🚀 المؤثرات البصرية والأنيميشن الخارق (VFX)
+   ========================================== */
 
-/* إخفاء شريط السكرول بالكامل */
+/* نبض القاعدة الخاصة باللاعب */
+@keyframes marker-pulse {
+    0% { transform: scale(1); box-shadow: 0 0 10px var(--neon-green); }
+    50% { transform: scale(1.15); box-shadow: 0 0 25px var(--neon-green); }
+    100% { transform: scale(1); box-shadow: 0 0 10px var(--neon-green); }
+}
+.pulse-me { animation: marker-pulse 2s infinite ease-in-out; border: 2px solid #fff !important; }
+
+/* 🚨 كشف الأعداء (تأثير الرادار والطيارة) */
+.enemy-revealed {
+    animation: radar-ping 0.8s infinite alternate !important;
+    border: 3px solid var(--neon-red) !important;
+    box-shadow: 0 0 30px var(--neon-red) !important;
+    z-index: 5000 !important;
+}
+@keyframes radar-ping { 0% { transform: scale(1); } 100% { transform: scale(1.5); } }
+
+/* ✈️ طائرة الاستطلاع */
+.scout-plane-anim {
+    position: fixed; top: 30%; left: -100px; font-size: 50px;
+    z-index: 9999; pointer-events: none;
+    filter: drop-shadow(0 15px 15px rgba(0, 210, 211, 0.6));
+    transition: left 4s linear;
+}
+
+/* إخفاء شريط السكرول */
 ::-webkit-scrollbar { display: none; }

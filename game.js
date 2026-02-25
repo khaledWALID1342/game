@@ -2,26 +2,28 @@
 // 🚀 WORLD ROCKETS GAME - CORE ENGINE (V2.0 PRO)
 // ==========================================================================
 
-// 1. استدعاء مكاتب Firebase (النسخة الحديثة ES6)
+// 1. استدعاء مكاتب Firebase (النسخة الحديثة ES6 عن طريق الـ CDN)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, onValue, set, update, get, child } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
+import { getDatabase, ref, onValue, set, update, get, child, push } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 // ==========================================================================
-// ⚠️ إعدادات السيرفر (FIREBASE CONFIG) ⚠️
-// استبدل القيم دي بالقيم اللي هتاخدها من حساب فايربيس بتاعك
+// ⚠️ إعدادات السيرفر (FIREBASE CONFIG) الخاصة بيك ⚠️
 // ==========================================================================
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY_HERE",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyDNRQaZQGXP7UE3GskBaC0tbqEXKNq2oQc",
+    authDomain: "world-rockets.firebaseapp.com",
+    databaseURL: "https://world-rockets-default-rtdb.firebaseio.com", // ده ضروري جداً عشان الداتابيز تشتغل
+    projectId: "world-rockets",
+    storageBucket: "world-rockets.firebasestorage.app",
+    messagingSenderId: "66034492326",
+    appId: "1:66034492326:web:43a9a2932b7e46d7c92567",
+    measurementId: "G-XVGLN0KZ0Y"
 };
 
-// تهيئة السيرفر
+// تهيئة السيرفر والتحليلات وقاعدة البيانات
 const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 const db = getDatabase(app);
 
 // ==========================================================================

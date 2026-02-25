@@ -1,460 +1,202 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-
 <head>
-
-<meta charset="UTF-8">
-
-<meta name="viewport"
-content="width=device-width, initial-scale=1.0">
-
-<!-- ✅ إضافة مهمة لتحسين التوافق -->
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
-
-<title>
-WORLD ROCKETS — Command Center
-</title>
-
-
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;600;900&display=swap" rel="stylesheet">
-
-
-<style>
-
-
-/* ===========================
-GLOBAL STYLE
-=========================== */
-
-body{
-
-margin:0;
-
-font-family:'Cairo';
-
-background:
-
-radial-gradient(circle at top,
-
-#020617,
-
-#000);
-
-color:white;
-
-height:100vh;
-
-display:flex;
-
-justify-content:center;
-
-align-items:center;
-
-overflow:hidden;
-
-}
-
-
-/* ===========================
-BACKGROUND EFFECT
-=========================== */
-
-body::before{
-
-content:"";
-
-position:absolute;
-
-width:200%;
-
-height:200%;
-
-background:
-
-linear-gradient(
-
-45deg,
-
-transparent,
-
-#00f0ff22,
-
-transparent
-
-);
-
-animation:scan 8s linear infinite;
-
-}
-
-
-@keyframes scan{
-
-0%{
-
-transform:translateY(-100%);
-
-}
-
-100%{
-
-transform:translateY(100%);
-
-}
-
-}
-
-
-/* ===========================
-MAIN PANEL
-=========================== */
-
-.panel{
-
-position:relative;
-
-width:420px;
-
-padding:40px;
-
-border-radius:20px;
-
-background:
-
-rgba(15,23,42,.85);
-
-backdrop-filter:blur(20px);
-
-box-shadow:
-
-0 0 40px #00f0ff44,
-
-inset 0 0 20px #00f0ff22;
-
-animation:fadeIn 1.5s;
-
-}
-
-
-@keyframes fadeIn{
-
-from{
-
-opacity:0;
-
-transform:translateY(30px);
-
-}
-
-to{
-
-opacity:1;
-
-transform:translateY(0);
-
-}
-
-}
-
-
-/* ===========================
-LOGO
-=========================== */
-
-.logo{
-
-font-size:32px;
-
-font-weight:900;
-
-text-align:center;
-
-margin-bottom:10px;
-
-background:
-
-linear-gradient(
-
-90deg,
-
-#00f0ff,
-
-#00ffa6
-
-);
-
--webkit-background-clip:text;
-
--webkit-text-fill-color:transparent;
-
-}
-
-
-/* ===========================
-SUBTITLE
-=========================== */
-
-.subtitle{
-
-text-align:center;
-
-color:#aaa;
-
-margin-bottom:30px;
-
-}
-
-
-/* ===========================
-INPUT
-=========================== */
-
-input,select{
-
-width:100%;
-
-padding:15px;
-
-margin-top:10px;
-
-border-radius:10px;
-
-border:none;
-
-background:#020617;
-
-color:white;
-
-font-size:16px;
-
-outline:none;
-
-box-shadow:
-
-inset 0 0 10px #00f0ff22;
-
-}
-
-
-input:focus{
-
-box-shadow:
-
-0 0 15px #00f0ff;
-
-}
-
-
-/* ===========================
-BUTTON
-=========================== */
-
-button{
-
-width:100%;
-
-padding:15px;
-
-margin-top:15px;
-
-border:none;
-
-border-radius:10px;
-
-font-size:18px;
-
-font-weight:bold;
-
-cursor:pointer;
-
-background:
-
-linear-gradient(
-
-90deg,
-
-#00f0ff,
-
-#00ffa6
-
-);
-
-color:black;
-
-transition:.3s;
-
-}
-
-
-button:hover{
-
-transform:scale(1.05);
-
-box-shadow:
-
-0 0 20px #00f0ff;
-
-}
-
-
-/* ===========================
-STATUS
-=========================== */
-
-.status{
-
-text-align:center;
-
-margin-top:20px;
-
-color:#00ffa6;
-
-font-size:14px;
-
-}
-
-
-/* ===========================
-FOOTER
-=========================== */
-
-.footer{
-
-position:absolute;
-
-bottom:10px;
-
-width:100%;
-
-text-align:center;
-
-font-size:12px;
-
-color:#555;
-
-}
-
-
-</style>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="description" content="World Rockets Game - The Ultimate AI-Powered Strategy War Game">
+    <meta name="theme-color" content="#070b14">
+    
+    <meta property="og:title" content="World Rockets | القيادة العليا">
+    <meta property="og:description" content="انضم لأقوى لعبة استراتيجية، أسس تحالفك، تحكم في الصواريخ، وسيطر على العالم!">
+    <meta property="og:type" content="website">
+
+    <title>World Rockets | AI Commander Edition 🚀</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800;900&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="game.css">
 </head>
-
-
-
-<body>
-
-
-
-<div class="panel">
-
-
-<div class="logo">
-
-WORLD ROCKETS
-
-</div>
-
-
-<div class="subtitle">
-
-القيادة العسكرية العالمية
-
-</div>
-
-
-
-<select id="server">
-
-<option value="server_1">
-
-🌍 الشرق الأوسط
-
-</option>
-
-<option value="server_2">
-
-🇪🇺 أوروبا
-
-</option>
-
-<option value="server_3">
-
-🇺🇸 أمريكا
-
-</option>
-
-</select>
-
-
-
-<input
-
-id="name"
-
-placeholder="اسم القائد"
-
-autocomplete="off"
-
->
-
-
-
-<input
-
-id="password"
-
-type="password"
-
-placeholder="كلمة المرور"
-
-autocomplete="off"
-
->
-
-
-
-<!-- ✅ إضافة type="button" لمنع أي سلوك افتراضي -->
-
-<button type="button" onclick="register()">
-
-إنشاء حساب جديد
-
-</button>
-
-
-
-<button type="button" onclick="login()">
-
-تسجيل الدخول
-
-</button>
-
-
-
-<div class="status" id="status">
-
-Secure Military Connection Ready
-
-</div>
-
-
-</div>
-
-
-
-<div class="footer">
-
-World Rockets Command © 2026
-
-</div>
-
-
-
-<!-- ✅ السطر المطلوب لتشغيل نظام الدخول -->
-<script type="module" src="./auth.js"></script>
-
-
+<body class="cyber-theme">
+
+    <div id="boot-screen" class="overlay-fullscreen active">
+        <div class="cyber-container">
+            <h1 class="glitch-text" data-text="WORLD ROCKETS">WORLD ROCKETS</h1>
+            <p class="subtitle">AI TACTICAL COMMAND CENTER v6.0</p>
+            
+            <div id="server-selection-panel" class="cyber-panel">
+                <h3><i class="fa-solid fa-network-wired"></i> تحديد عقدة الاتصال (Server)</h3>
+                <div class="server-list">
+                    <label class="server-card optimal">
+                        <input type="radio" name="server" value="mena_1" checked>
+                        <div class="server-info">
+                            <span class="s-name">الشرق الأوسط (MENA-1)</span>
+                            <span class="s-ping" style="color: #2ed573;">24ms <i class="fa-solid fa-signal"></i></span>
+                        </div>
+                        <div class="s-status">موصى به بواسطة AI 🤖</div>
+                    </label>
+                    <label class="server-card">
+                        <input type="radio" name="server" value="eu_1">
+                        <div class="server-info">
+                            <span class="s-name">أوروبا (EU-Central)</span>
+                            <span class="s-ping" style="color: #ffa502;">85ms <i class="fa-solid fa-signal"></i></span>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="auth-box">
+                    <input type="text" id="commander-name" class="cyber-input" placeholder="[أدخل كود القائد]" autocomplete="off" required>
+                    <input type="password" id="commander-pass" class="cyber-input" placeholder="[كلمة المرور المشفرة]" required>
+                    <button id="btn-init-uplink" class="cyber-button primary">
+                        <i class="fa-solid fa-fingerprint"></i> تأكيد الهوية وبدء المزامنة
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="loading-screen" class="overlay-fullscreen hidden">
+        <div class="loader-core">
+            <div class="radar-spinner"></div>
+            <h2 id="loading-text">جاري تهيئة الذكاء الاصطناعي...</h2>
+            <div class="cyber-progress-bar">
+                <div id="loading-fill" class="progress-fill"></div>
+            </div>
+            <p id="ai-tip" class="loading-tip">نصيحة AI: التحالفات القوية هي مفتاح السيطرة على الخريطة.</p>
+        </div>
+    </div>
+
+    <div id="main-hud" class="hidden">
+        
+        <header class="hud-top">
+            <div class="brand-zone">
+                <i class="fa-solid fa-globe fa-spin-pulse"></i>
+                <span class="brand-name">W-ROCKETS</span>
+                <span class="live-indicator">LIVE</span>
+            </div>
+            
+            <div class="stats-zone">
+                <div class="stat-box health" data-tooltip="سلامة القاعدة">
+                    <div class="stat-icon"><i class="fa-solid fa-heart-pulse"></i></div>
+                    <div class="stat-value"><span id="val-health">100</span>%</div>
+                    <div class="stat-bar-bg"><div id="bar-health" class="stat-bar-fill"></div></div>
+                </div>
+                
+                <div class="stat-box energy" data-tooltip="الطاقة (تتجدد تلقائياً)">
+                    <div class="stat-icon"><i class="fa-solid fa-bolt"></i></div>
+                    <div class="stat-value"><span id="val-energy">100</span>/100</div>
+                    <div class="stat-bar-bg"><div id="bar-energy" class="stat-bar-fill"></div></div>
+                </div>
+
+                <div class="stat-box coins" data-tooltip="الموارد المالية">
+                    <div class="stat-icon"><i class="fa-solid fa-coins"></i></div>
+                    <div class="stat-value" id="val-coins">0</div>
+                </div>
+
+                <div class="stat-box ammo" data-tooltip="ترسانة الصواريخ">
+                    <div class="stat-icon"><i class="fa-solid fa-rocket"></i></div>
+                    <div class="stat-value" id="val-rockets">0</div>
+                </div>
+            </div>
+
+            <div class="actions-zone">
+                <button id="btn-inbox" class="hud-btn" data-tooltip="صندوق الوارد">
+                    <i class="fa-solid fa-envelope"></i>
+                    <span id="badge-inbox" class="badge hidden">0</span>
+                </button>
+                <button id="btn-system-menu" class="hud-btn" data-tooltip="نظام الإدارة">
+                    <i class="fa-solid fa-bars-staggered"></i>
+                </button>
+            </div>
+        </header>
+
+        <aside id="ai-commander-panel" class="floating-panel left-panel">
+            <div class="panel-header">
+                <i class="fa-solid fa-microchip"></i> AI COMMANDER
+                <button class="minimize-btn"><i class="fa-solid fa-minus"></i></button>
+            </div>
+            <div class="ai-chat-box" id="ai-chat-history">
+                <div class="ai-msg system">مرحباً أيها القائد. أنا مساعدك الذكي. جاهز لتحليل الخريطة.</div>
+            </div>
+            <div class="ai-actions">
+                <button id="btn-ai-scan" class="ai-btn"><i class="fa-solid fa-radar"></i> فحص الأعداء</button>
+                <button id="btn-ai-suggest" class="ai-btn"><i class="fa-solid fa-lightbulb"></i> اقتراح تكتيك</button>
+            </div>
+        </aside>
+
+        <aside id="right-dashboard" class="floating-panel right-panel">
+            <div class="dashboard-tabs">
+                <button class="tab-btn active" data-target="tab-leaderboard"><i class="fa-solid fa-trophy"></i> التصنيف</button>
+                <button class="tab-btn" data-target="tab-alliance"><i class="fa-solid fa-shield-cat"></i> تحالفي</button>
+            </div>
+            <div class="tab-content active" id="tab-leaderboard">
+                <div id="leaderboard-list" class="scroll-container">
+                    </div>
+            </div>
+            <div class="tab-content" id="tab-alliance">
+                <div id="alliance-info" class="alliance-widget">
+                    <h4 id="alliance-name-display">غير منضم لتحالف</h4>
+                    <p id="alliance-stats">الأعضاء: 0/50 | النفوذ: 0 كم</p>
+                    <button id="btn-manage-alliance" class="cyber-button small">إدارة التحالف</button>
+                </div>
+            </div>
+        </aside>
+
+        <nav id="action-bar" class="bottom-nav">
+            <div class="nav-container">
+                <button id="btn-action-locate" class="action-btn primary-action">
+                    <i class="fa-solid fa-location-crosshairs"></i>
+                    <span>تمركز</span>
+                </button>
+                <button id="btn-action-collect" class="action-btn">
+                    <i class="fa-solid fa-hammer"></i>
+                    <span>تعدين</span>
+                </button>
+                <button id="btn-action-quests" class="action-btn">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span>المهام</span>
+                    <span class="badge warning">!</span>
+                </button>
+                <button id="btn-action-shop" class="action-btn">
+                    <i class="fa-solid fa-store"></i>
+                    <span>السوق</span>
+                </button>
+            </div>
+        </nav>
+
+        <div id="combat-log" class="combat-feed-container"></div>
+    </div>
+
+    <div id="map-wrapper">
+        <div id="map"></div>
+        <div id="radar-overlay" class="radar-scan-effect hidden"></div>
+        <div id="crosshair" class="center-crosshair hidden"></div>
+    </div>
+
+    <div id="audio-engine" style="display: none;">
+        <audio id="bgm-main" src="assets/sounds/ambient-war.mp3" loop></audio>
+        <audio id="sfx-ui-click" src="assets/sounds/click.mp3"></audio>
+        <audio id="sfx-error" src="assets/sounds/error.mp3"></audio>
+        <audio id="sfx-success" src="assets/sounds/success.mp3"></audio>
+        <audio id="sfx-launch" src="assets/sounds/missile-launch.mp3"></audio>
+        <audio id="sfx-explosion" src="assets/sounds/explosion-heavy.mp3"></audio>
+        <audio id="sfx-notification" src="assets/sounds/notification.mp3"></audio>
+        <audio id="sfx-ai-voice" src="assets/sounds/ai-system-online.mp3"></audio>
+    </div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js" defer></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
+
+    <script type="module" src="game.js"></script>
 
 </body>
-
 </html>

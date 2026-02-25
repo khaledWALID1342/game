@@ -2,18 +2,17 @@
 // 🚀 WORLD ROCKETS GAME - CORE ENGINE (V2.0 PRO)
 // ==========================================================================
 
-// 1. استدعاء مكاتب Firebase (النسخة الحديثة ES6 عن طريق الـ CDN)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
-import { getDatabase, ref, onValue, set, update, get, child, push } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, onValue, set, update, get, push, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 // ==========================================================================
-// ⚠️ إعدادات السيرفر (FIREBASE CONFIG) الخاصة بيك ⚠️
+// ⚠️ إعدادات السيرفر (FIREBASE CONFIG) ⚠️
 // ==========================================================================
 const firebaseConfig = {
     apiKey: "AIzaSyDNRQaZQGXP7UE3GskBaC0tbqEXKNq2oQc",
     authDomain: "world-rockets.firebaseapp.com",
-    databaseURL: "https://world-rockets-default-rtdb.firebaseio.com", // ده ضروري جداً عشان الداتابيز تشتغل
+    databaseURL: "https://world-rockets-default-rtdb.firebaseio.com", 
     projectId: "world-rockets",
     storageBucket: "world-rockets.firebasestorage.app",
     messagingSenderId: "66034492326",
@@ -21,33 +20,28 @@ const firebaseConfig = {
     measurementId: "G-XVGLN0KZ0Y"
 };
 
-// تهيئة السيرفر والتحليلات وقاعدة البيانات
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 const db = getDatabase(app);
 
 // ==========================================================================
-// 2. إعدادات اللعبة والخريطة الأساسية (GAME STATE & MAP)
+// إعدادات اللعبة والخريطة الأساسية 
 // ==========================================================================
 let currentPlayer = null;
-let playersData = {}; // تخزين بيانات كل اللاعبين
-let markers = {}; // تخزين أيقونات الخريطة
+let playersData = {}; 
+let markers = {}; 
+let currentLang = 'ar'; // لغة اللعبة الافتراضية
 
-// تهيئة خريطة Leaflet (Dark Mode)
 const map = L.map('map', { zoomControl: false }).setView([20, 0], 2);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
     attribution: '© OpenStreetMap & CARTO',
     maxZoom: 19
 }).addTo(map);
 
-// إخفاء شاشة التحميل بعد ما الخريطة تحمل
 setTimeout(() => {
     document.getElementById('loading-screen').classList.remove('active');
 }, 1500);
 
-// ==========================================================================
-// 3. نظام الصوتيات (AUDIO SYSTEM)
-// ==========================================================================
 const sounds = {
     launch: document.getElementById('sfx-launch'),
     explosion: document.getElementById('sfx-explosion'),
@@ -61,18 +55,16 @@ function playSound(type) {
 }
 
 // ==========================================================================
-// 4. الاتصال المباشر بالسيرفر (REAL-TIME SYNC)
+// الاتصال المباشر بالسيرفر 
 // ==========================================================================
 const playersRef = ref(db, 'players/');
 
-// استماع لحظي لأي تغيير في السيرفر (حد دخل، حد انضرب، حد اشترى)
 onValue(playersRef, (snapshot) => {
     if (snapshot.exists()) {
         playersData = snapshot.val();
         updateMapMarkers();
         updateLeaderboard();
         
-        // تحديث واجهة اللاعب لو كان مسجل دخول
         if (currentPlayer && playersData[currentPlayer.id]) {
             currentPlayer = playersData[currentPlayer.id];
             updateHUD();
@@ -81,11 +73,7 @@ onValue(playersRef, (snapshot) => {
     }
 });
 
-// ==========================================================================
-// 5. نظام الخريطة والرسم (MAP RENDERING)
-// ==========================================================================
 function updateMapMarkers() {
-    // مسح اللاعبين اللي ماتوا أو خرجوا
     for (let id in markers) {
         if (!playersData[id]) {
             map.removeLayer(markers[id]);
@@ -93,15 +81,16 @@ function updateMapMarkers() {
         }
     }
 
-    // رسم أو تحديث اللاعبين الحاليين
     for (let id in playersData) {
         let p = playersData[id];
-        if (!p.lat || !p.lng || p.health <= 0) continue; // لو ميت مبيترسمش
+        if (!p.lat || !p.lng || p.health <= 0) continue; 
 
         let isMe = (currentPlayer && currentPlayer.id === id);
-        
-        // شكل الأيقونة بناءً على الصحة
         let iconColor = p.health > 50 ? '#2ed573' : (p.health > 20 ? '#ffa502' : '#ff4757');
+        
+        // لو الصحة 1000 (God Mode)، نغير اللون للذهبي
+        if(p.health > 100) iconColor = 'gold';
+
         let markerHtml = `
             <div style="
                 background: ${iconColor}; 
@@ -110,22 +99,19 @@ function updateMapMarkers() {
                 border: 3px solid ${isMe ? '#fff' : '#000'};
                 box-shadow: 0 0 15px ${iconColor};
                 display: flex; justify-content: center; align-items: center;
-                color: white; font-weight: bold; font-size: 10px;
-            ">${p.health}</div>
+                color: ${p.health > 100 ? '#000' : 'white'}; font-weight: bold; font-size: 8px;
+            ">${p.health > 100 ? '👑' : p.health}</div>
         `;
 
         let customIcon = L.divIcon({ className: 'custom-div-icon', html: markerHtml, iconSize: [20, 20], iconAnchor: [10, 10] });
 
         if (markers[id]) {
-            // تحديث مكان وأيقونة اللاعب الموجود
             markers[id].setLatLng([p.lat, p.lng]);
             markers[id].setIcon(customIcon);
         } else {
-            // إضافة لاعب جديد للخريطة
             let m = L.marker([p.lat, p.lng], { icon: customIcon }).addTo(map);
             m.bindPopup(`<b>${isMe ? '🛡️ قاعدتك' : '🎯 ' + p.name}</b><br>❤️ الصحة: ${p.health}%<br>🛡️ دروع: ${p.shields}`);
             
-            // نظام الاستهداف
             m.on('click', () => {
                 if (!isMe && currentPlayer) prepareAttack(p);
             });
@@ -135,10 +121,8 @@ function updateMapMarkers() {
 }
 
 // ==========================================================================
-// 6. ميكانيكا اللعب الأساسية (CORE MECHANICS)
+// ميكانيكا اللعب والتسجيل 
 // ==========================================================================
-
-// تسجيل الدخول (AUTH)
 document.getElementById('btn-auth').addEventListener('click', async () => {
     const { value: name } = await Swal.fire({
         title: 'القيادة العامة',
@@ -151,16 +135,14 @@ document.getElementById('btn-auth').addEventListener('click', async () => {
 
     if (!name || name.trim() === '') return;
 
-    // بنعمل ID مميز لكل لاعب بناءً على اسمه عشان يفضل ثابت
     let playerId = "player_" + name.replace(/\s+/g, '_').toLowerCase();
 
     const userRef = ref(db, `players/${playerId}`);
     get(userRef).then((snapshot) => {
         if (snapshot.exists()) {
-            currentPlayer = snapshot.val(); // لاعب قديم
+            currentPlayer = snapshot.val(); 
             Swal.fire({ title: 'أهلاً بعودتك أيها القائد!', icon: 'success', toast: true, position: 'top', timer: 2000, showConfirmButton: false});
         } else {
-            // لاعب جديد
             currentPlayer = {
                 id: playerId, name: name, lat: null, lng: null,
                 health: 100, shields: 0, coins: 50, rockets: 2,
@@ -170,10 +152,12 @@ document.getElementById('btn-auth').addEventListener('click', async () => {
             Swal.fire('تم التسجيل!', 'حدد موقع قاعدتك الآن من الخريطة.', 'info');
         }
         updateHUD();
+        
+        // السطر السحري لحل مشكلة كراش الخريطة
+        setTimeout(() => { map.invalidateSize(); }, 500);
     });
 });
 
-// تحديد الموقع (LOCATE)
 document.getElementById('btn-locate').addEventListener('click', () => {
     if (!currentPlayer) return Swal.fire('خطأ', 'سجل دخول أولاً', 'error');
     if (currentPlayer.health <= 0) return Swal.fire('قاعدتك مدمرة', 'ادفع 100 كوينز لإعادة البناء!', 'error');
@@ -189,12 +173,11 @@ document.getElementById('btn-locate').addEventListener('click', () => {
     });
 });
 
-// نظام الكوينز والـ Cooldown (ECONOMY)
 document.getElementById('btn-collect-coins').addEventListener('click', () => {
-    if (!currentPlayer) return;
+    if (!currentPlayer) return Swal.fire('خطأ', 'سجل دخول الأول يا بطل!', 'error');
     
     let now = Date.now();
-    let cooldown = 3600000; // ساعة كاملة
+    let cooldown = 3600000; 
     let timePassed = now - currentPlayer.lastCoinTime;
 
     if (timePassed < cooldown) {
@@ -210,53 +193,125 @@ document.getElementById('btn-collect-coins').addEventListener('click', () => {
     Swal.fire({title: '+20 Coins', icon: 'success', toast: true, position: 'bottom-end', timer: 1500, showConfirmButton: false});
 });
 
-// المتجر والسوق الأسود (SHOP)
-document.getElementById('btn-shop').addEventListener('click', async () => {
-    if (!currentPlayer) return;
+// ==========================================================================
+// نظام السوق الأسود المتطور 
+// ==========================================================================
+document.getElementById('btn-shop').addEventListener('click', () => {
+    if (!currentPlayer) return Swal.fire('خطأ', 'سجل دخول الأول يا بطل!', 'error');
     
-    const { value: item } = await Swal.fire({
+    Swal.fire({
         title: 'السوق الأسود 🛒',
-        input: 'radio',
-        inputOptions: {
-            'rocket': '🚀 صاروخ باليستي (50 Coins)',
-            'shield': '🛡️ درع طاقة (80 Coins)',
-            'heal': '🛠️ إصلاح القاعدة +50% (100 Coins)'
-        },
-        inputValidator: (value) => { if (!value) return 'لازم تختار حاجة!' },
-        background: 'var(--bg-panel)', color: '#fff', confirmButtonColor: 'var(--accent-gold)'
-    });
-
-    if (item) {
-        let cost = item === 'rocket' ? 50 : item === 'shield' ? 80 : 100;
-        if (currentPlayer.coins >= cost) {
-            let updates = { coins: currentPlayer.coins - cost };
-            if (item === 'rocket') updates.rockets = currentPlayer.rockets + 1;
-            if (item === 'shield') updates.shields = currentPlayer.shields + 1;
-            if (item === 'heal') updates.health = Math.min(100, currentPlayer.health + 50); // ماكسيموم 100
-            
-            update(ref(db, `players/${currentPlayer.id}`), updates);
-            playSound('coin');
-            Swal.fire({title: 'تم الشراء بنجاح', icon: 'success', toast: true, timer: 1500, showConfirmButton: false});
-        } else {
-            Swal.fire('رصيد غير كافي', 'روح جمع كوينز الأول يا بطل!', 'error');
+        html: `
+            <div style="display:flex; flex-direction:column; gap:15px; margin-top: 10px;">
+                <button id="buy-rocket" class="btn-glow" style="width:100%; padding:15px; border-color:var(--primary-glow); font-size:1.1rem;">
+                    🚀 صاروخ باليستي <br><span style="color:#ff4757; font-size:0.9rem;">السعر: 50 Coins</span>
+                </button>
+                <button id="buy-shield" class="btn-glow" style="width:100%; padding:15px; border-color:var(--shield-blue); font-size:1.1rem;">
+                    🛡️ درع طاقة <br><span style="color:#70a1ff; font-size:0.9rem;">السعر: 80 Coins</span>
+                </button>
+                <button id="buy-heal" class="btn-glow" style="width:100%; padding:15px; border-color:var(--health-green); font-size:1.1rem;">
+                    🛠️ إصلاح القاعدة +50% <br><span style="color:#2ed573; font-size:0.9rem;">السعر: 100 Coins</span>
+                </button>
+            </div>
+        `,
+        background: 'var(--bg-panel)', color: '#fff',
+        showConfirmButton: false, showCloseButton: true,
+        didOpen: () => {
+            document.getElementById('buy-rocket').addEventListener('click', () => handlePurchase('rocket', 50));
+            document.getElementById('buy-shield').addEventListener('click', () => handlePurchase('shield', 80));
+            document.getElementById('buy-heal').addEventListener('click', () => handlePurchase('heal', 100));
         }
+    });
+});
+
+function handlePurchase(item, cost) {
+    if (currentPlayer.coins >= cost) {
+        let updates = { coins: currentPlayer.coins - cost };
+        if (item === 'rocket') updates.rockets = currentPlayer.rockets + 1;
+        if (item === 'shield') updates.shields = currentPlayer.shields + 1;
+        if (item === 'heal') updates.health = Math.min(100, currentPlayer.health + 50); 
+        // الماكسيموم 100، إلا لو كان مفعل God Mode هيحتفظ بصحته
+        if (currentPlayer.health > 100) updates.health = currentPlayer.health; 
+        
+        update(ref(db, `players/${currentPlayer.id}`), updates);
+        playSound('coin');
+        Swal.fire({title: 'تم الشراء بنجاح! 💸', icon: 'success', toast: true, position: 'top', timer: 1500, showConfirmButton: false});
+    } else {
+        Swal.fire('رصيد غير كافي', 'محتاج تجمع Coins أكتر عشان تشتري ده!', 'error');
     }
+}
+
+// ==========================================================================
+// نظام الإعدادات وحذف الحساب والأدمن ⚙️
+// ==========================================================================
+document.getElementById('btn-settings').addEventListener('click', () => {
+    Swal.fire({
+        title: 'الإعدادات ⚙️',
+        html: `
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                <button id="toggle-lang" class="btn-glow" style="border-color:var(--shield-blue);">🌍 تغيير اللغة (AR/EN)</button>
+                <button id="admin-code" class="btn-glow" style="border-color:var(--accent-gold);">🤫 إدخال كود سري</button>
+                <button id="delete-acc" class="btn-glow" style="border-color:#ff4757; color:#ff4757;">🗑️ حذف حسابي نهائياً</button>
+            </div>
+        `,
+        background: 'var(--bg-panel)', color: '#fff',
+        showConfirmButton: false, showCloseButton: true,
+        didOpen: () => {
+            // 1. تغيير اللغة (تأثير بصري بسيط حالياً)
+            document.getElementById('toggle-lang').addEventListener('click', () => {
+                currentLang = currentLang === 'ar' ? 'en' : 'ar';
+                document.querySelector('.logo').innerHTML = currentLang === 'en' ? '<i class="fa-solid fa-earth-americas"></i> World Rockets' : '<i class="fa-solid fa-earth-americas"></i> حروب الصواريخ';
+                Swal.fire('تم', 'تم تغيير لغة الواجهة (ميزة تجريبية)', 'success');
+            });
+
+            // 2. كود الأدمن السري (إمبراطور الخريطة)
+            document.getElementById('admin-code').addEventListener('click', async () => {
+                const { value: code } = await Swal.fire({
+                    title: 'كود الإدارة', input: 'password', background: 'var(--bg-panel)', color: '#fff'
+                });
+                if(code === 'KHALED_VIP') {
+                    if(!currentPlayer) return Swal.fire('خطأ', 'سجل دخول الأول', 'error');
+                    update(ref(db, `players/${currentPlayer.id}`), {
+                        coins: 99999, rockets: 999, shields: 100, health: 1000 // God Mode
+                    });
+                    broadcastKillFeed("👑 الإمبراطور القائد وصل الخريطة، استعدوا للدمار!");
+                    Swal.fire('تم التفعيل', 'أهلاً بك يا زعيم 😈 الخريطة كلها بتاعتك.', 'success');
+                } else if(code) {
+                    Swal.fire('كود خاطئ', 'حاول تلعب بشرف يا بطل 😂', 'error');
+                }
+            });
+
+            // 3. حذف الحساب نهائياً
+            document.getElementById('delete-acc').addEventListener('click', () => {
+                if(!currentPlayer) return Swal.fire('خطأ', 'أنت لم تسجل دخولك بعد', 'error');
+                Swal.fire({
+                    title: 'متأكد؟', text: "كل إنجازاتك وقاعدتك هتتمسح!", icon: 'warning',
+                    showCancelButton: true, confirmButtonColor: '#ff4757', confirmButtonText: 'نعم، احذف حسابي', cancelButtonText: 'إلغاء',
+                    background: 'var(--bg-panel)', color: '#fff'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        remove(ref(db, `players/${currentPlayer.id}`));
+                        currentPlayer = null;
+                        Swal.fire({title: 'تم الحذف', icon: 'success', timer: 1500}).then(() => {
+                            window.location.reload(); // تحديث الصفحة
+                        });
+                    }
+                });
+            });
+        }
+    });
 });
 
 // ==========================================================================
-// 7. نظام الحروب والصواريخ المعقد (COMBAT SYSTEM)
+// نظام الحروب والصواريخ والأنيميشن الذكي 
 // ==========================================================================
 function prepareAttack(targetData) {
     if (currentPlayer.rockets <= 0) return Swal.fire('لا يوجد ذخيرة', 'اشتري صواريخ من السوق الأسود', 'error');
     if (!currentPlayer.lat) return Swal.fire('خطأ', 'لازم تحدد موقع قاعدتك الأول عشان تضرب', 'error');
 
     Swal.fire({
-        title: `تأكيد الإطلاق على ${targetData.name}؟`,
-        text: 'سيتم استهلاك 1 صاروخ',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: '🚀 إطلاق!',
-        cancelButtonText: 'إلغاء',
+        title: `تأكيد الإطلاق على ${targetData.name}؟`, text: 'سيتم استهلاك 1 صاروخ', icon: 'warning',
+        showCancelButton: true, confirmButtonText: '🚀 إطلاق!', cancelButtonText: 'إلغاء',
         background: 'var(--bg-panel)', color: '#fff', confirmButtonColor: 'var(--primary-glow)'
     }).then((result) => {
         if (result.isConfirmed) executeAttack(targetData);
@@ -265,41 +320,33 @@ function prepareAttack(targetData) {
 
 function executeAttack(targetData) {
     playSound('launch');
-    
-    // 1. خصم الصاروخ من المهاجم
     update(ref(db, `players/${currentPlayer.id}`), { rockets: currentPlayer.rockets - 1 });
 
-    // 2. حساب المسافة لتحديد وقت وصول الصاروخ (معادلة هندسية)
     let startLatLng = L.latLng(currentPlayer.lat, currentPlayer.lng);
     let endLatLng = L.latLng(targetData.lat, targetData.lng);
-    let distance = startLatLng.distanceTo(endLatLng); // المسافة بالمتر
-    let flightTime = Math.min(10000, Math.max(2000, distance / 1000)); // من ثانيتين لـ 10 ثواني كحد أقصى
+    let distance = startLatLng.distanceTo(endLatLng); 
+    let flightTime = Math.min(10000, Math.max(2000, distance / 1000)); 
 
-    // 3. أنيميشن الصاروخ على الخريطة
     animateRocketFlight(startLatLng, endLatLng, flightTime);
 
-    // 4. تنفيذ الضرر بعد وصول الصاروخ
     setTimeout(() => {
         playSound('explosion');
-        // جلب بيانات الهدف الحديثة (عشان ممكن يكون اشترى درع وهو طاير!)
         get(ref(db, `players/${targetData.id}`)).then((snap) => {
             if (snap.exists()) {
                 let currentTarget = snap.val();
-                if (currentTarget.health <= 0) return; // مات خلاص
+                if (currentTarget.health <= 0) return; 
 
                 let updates = {};
                 let killMsg = '';
 
-                // نظام صد الدروع
                 if (currentTarget.shields > 0) {
                     updates.shields = currentTarget.shields - 1;
                     killMsg = `🛡️ ${targetData.name} صد صاروخ من ${currentPlayer.name}!`;
                 } else {
-                    updates.health = currentTarget.health - 25; // الصاروخ بينقص 25
+                    updates.health = currentTarget.health - 25; 
                     if (updates.health <= 0) {
                         updates.health = 0;
                         killMsg = `☠️ ${currentPlayer.name} دمر قاعدة ${targetData.name} تماماً!`;
-                        // زيادة السكور للمهاجم
                         update(ref(db, `players/${currentPlayer.id}`), { score: currentPlayer.score + 100 });
                     } else {
                         killMsg = `💥 ${currentPlayer.name} ضرب ${targetData.name} مباشر!`;
@@ -314,18 +361,25 @@ function executeAttack(targetData) {
     }, flightTime);
 }
 
-// دالة أنيميشن الصاروخ (بتعمل خط بيتحرك)
+// الأنيميشن الذكي (الصاروخ بيلف وشه للهدف)
 function animateRocketFlight(start, end, duration) {
-    let rocketIcon = L.divIcon({ className: 'rocket-fly', html: '🚀', iconSize: [30, 30] });
-    let flyingMarker = L.marker(start, { icon: rocketIcon, zIndexOffset: 1000 }).addTo(map);
+    let p1 = map.latLngToContainerPoint(start);
+    let p2 = map.latLngToContainerPoint(end);
+    let angle = Math.atan2(p2.y - p1.y, p2.x - p1.x) * (180 / Math.PI) + 45; 
+
+    let rocketIcon = L.divIcon({ 
+        className: 'rocket-fly', 
+        html: `<div style="transform: rotate(${angle}deg); font-size: 25px; filter: drop-shadow(0 0 10px red);">🚀</div>`, 
+        iconSize: [30, 30] 
+    });
     
+    let flyingMarker = L.marker(start, { icon: rocketIcon, zIndexOffset: 1000 }).addTo(map);
     let startTime = performance.now();
     
     function animate(currentTime) {
         let elapsed = currentTime - startTime;
-        let progress = Math.min(elapsed / duration, 1); // من 0 لـ 1
+        let progress = Math.min(elapsed / duration, 1); 
 
-        // Interpolation (حساب النقطة الحالية بين البداية والنهاية)
         let currentLat = start.lat + (end.lat - start.lat) * progress;
         let currentLng = start.lng + (end.lng - start.lng) * progress;
         
@@ -334,9 +388,8 @@ function animateRocketFlight(start, end, duration) {
         if (progress < 1) {
             requestAnimationFrame(animate);
         } else {
-            map.removeLayer(flyingMarker); // يختفي لما يوصل
-            // تأثير انفجار مكانه
-            let exp = L.marker(end, { icon: L.divIcon({html: '💥', iconSize:[40,40]}) }).addTo(map);
+            map.removeLayer(flyingMarker); 
+            let exp = L.marker(end, { icon: L.divIcon({html: '<div style="font-size:40px; animation: pulseGlow 0.5s;">💥</div>', iconSize:[40,40]}) }).addTo(map);
             setTimeout(() => map.removeLayer(exp), 1000);
         }
     }
@@ -344,17 +397,17 @@ function animateRocketFlight(start, end, duration) {
 }
 
 // ==========================================================================
-// 8. واجهة المستخدم والتحديثات (UI UPDATES & KILL FEED)
+// واجهة المستخدم والتحديثات
 // ==========================================================================
 function updateHUD() {
     if (!currentPlayer) return;
-    document.getElementById('hud-health').innerText = currentPlayer.health + '%';
+    document.getElementById('hud-health').innerText = (currentPlayer.health > 100 ? 'GOD' : currentPlayer.health + '%');
     document.getElementById('hud-shield').innerText = currentPlayer.shields;
     document.getElementById('hud-coins').innerText = currentPlayer.coins;
     document.getElementById('hud-rockets').innerText = currentPlayer.rockets;
 
-    // تغيير لون الصحة لو بتموت
     let healthColor = currentPlayer.health > 50 ? 'var(--health-green)' : 'var(--primary-glow)';
+    if(currentPlayer.health > 100) healthColor = 'gold'; // لون الأدمن
     document.querySelector('.stat-badge.health').style.color = healthColor;
     document.querySelector('.stat-badge.health span').style.textShadow = `0 0 8px ${healthColor}`;
 }
@@ -363,14 +416,13 @@ function updateLeaderboard() {
     let list = document.getElementById('leaderboard-list');
     list.innerHTML = '';
     
-    // ترتيب اللاعبين بالسكور
     let sortedPlayers = Object.values(playersData)
         .sort((a, b) => b.score - a.score)
-        .slice(0, 10); // أول 10 بس
+        .slice(0, 10); 
 
     sortedPlayers.forEach((p, index) => {
         let rankClass = index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : '';
-        let status = p.health <= 0 ? '☠️' : '';
+        let status = p.health <= 0 ? '☠️' : (p.health > 100 ? '👑' : '');
         list.innerHTML += `
             <div class="leaderboard-item ${rankClass}">
                 <div class="player-info">
@@ -382,20 +434,23 @@ function updateLeaderboard() {
     });
 }
 
+// زرار تصغير وتكبير قائمة القادة
+document.querySelector('.panel-title').addEventListener('click', () => {
+    document.getElementById('leaderboard-panel').classList.toggle('collapsed');
+});
+document.getElementById('leaderboard-panel').classList.add('collapsed');
+
 function broadcastKillFeed(msg) {
-    // بيبعت الإشعار لكل الناس عن طريق إضافة مؤقتة في الداتابيز
     let newMsgRef = push(ref(db, 'killfeed'));
     set(newMsgRef, { text: msg, time: Date.now() });
 }
 
-// استقبال الإشعارات الحية
 onValue(ref(db, 'killfeed'), (snapshot) => {
     if (snapshot.exists()) {
         let feedBox = document.getElementById('kill-feed');
-        feedBox.innerHTML = ''; // بننظف القديم
+        feedBox.innerHTML = ''; 
         let allMsgs = snapshot.val();
         
-        // عرض أحدث 3 إشعارات فقط من آخر 10 ثواني
         let recentMsgs = Object.values(allMsgs)
             .filter(m => Date.now() - m.time < 10000)
             .sort((a, b) => b.time - a.time)
@@ -413,17 +468,15 @@ onValue(ref(db, 'killfeed'), (snapshot) => {
 function checkDeath() {
     if (currentPlayer && currentPlayer.health <= 0) {
         Swal.fire({
-            title: 'قاعدتك اتدمرت! ☠️',
-            text: 'لقد تم محوك من الخريطة.',
-            icon: 'error',
+            title: 'قاعدتك اتدمرت! ☠️', text: 'لقد تم محوك من الخريطة.', icon: 'error',
             confirmButtonText: 'إعادة بناء القاعدة (100 Coins)',
-            background: 'var(--bg-panel)', color: '#fff'
+            background: 'var(--bg-panel)', color: '#fff', allowOutsideClick: false
         }).then((result) => {
             if (result.isConfirmed) {
                 if (currentPlayer.coins >= 100) {
                     update(ref(db, `players/${currentPlayer.id}`), { health: 100, coins: currentPlayer.coins - 100 });
                 } else {
-                    Swal.fire('فشلت الإنعاش', 'معاكش كوينز كفاية، جمع كوينز وارجع تاني.', 'warning');
+                    Swal.fire('فشلت الإنعاش', 'معاكش كوينز كفاية، استنى وجمع كوينز أو ابدأ من جديد.', 'warning');
                 }
             }
         });

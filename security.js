@@ -1,77 +1,104 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 
 import {
-
 getFirestore,
-
 collection,
-
 addDoc
-
 }
-
 from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+// Firebase config (بياناتك)
 
 const firebaseConfig = {
 
-apiKey: "YOUR KEY",
+apiKey: "AIzaSyDNRQaZQGXP7UE3GskBaC0tbqEXKNq2oQc",
 
-authDomain: "YOUR DOMAIN",
+authDomain: "world-rockets.firebaseapp.com",
 
-projectId: "YOUR PROJECT ID",
+projectId: "world-rockets",
+
+storageBucket: "world-rockets.firebasestorage.app",
+
+messagingSenderId: "66034492326",
+
+appId: "1:66034492326:web:76649d590a1d2555c92567",
+
+measurementId: "G-XSYTG0J31P"
 
 };
+
+// تشغيل Firebase
 
 const app = initializeApp(firebaseConfig);
 
 const db = getFirestore(app);
 
-function detectAttack(input){
+// اكتشاف الهجوم
+
+function detectAttack(text){
 
 const patterns = [
 
-"<script>",
+"<script",
+
+"alert(",
 
 "SELECT",
 
 "DROP",
 
-"UNION",
+"INSERT",
+
+"DELETE",
 
 "--",
 
-"alert("
+"<img",
+
+"<iframe",
+
+"onerror"
 
 ];
 
-return patterns.some(p => input.includes(p));
+return patterns.some(p =>
+text.toLowerCase().includes(p.toLowerCase())
+);
 
 }
 
-window.check = async function(){
+// عند الضغط على الزر
+
+window.checkInput = async function(){
 
 let input = document.getElementById("input").value;
 
 let result = document.getElementById("result");
 
-if(detectAttack(input)){
+let attack = detectAttack(input);
 
-result.innerHTML = "⚠️ Attack Detected and Logged";
+if(attack){
 
-await addDoc(collection(db, "attacks"), {
+result.innerHTML = "⚠️ تم اكتشاف محاولة";
 
-input: input,
+}else{
 
-time: new Date().toString(),
+result.innerHTML = "✅ إدخال آمن";
+
+}
+
+// تسجيل في Firebase
+
+await addDoc(collection(db, "logs"), {
+
+text: input,
+
+attack: attack,
+
+time: new Date().toISOString(),
 
 userAgent: navigator.userAgent
 
 });
-
-}else{
-
-result.innerHTML = "✅ Safe";
-
-}
 
 }

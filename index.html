@@ -1,6 +1,5 @@
-<!DOCTYPE html><html lang="ar">
-<head><meta charset="UTF-8"><title>Security Test</title><meta http-equiv="Content-Security-Policy"
-content="default-src 'self' https://www.gstatic.com https://*.googleapis.com; script-src 'self' https://www.gstatic.com; connect-src https://*.googleapis.com;">
+<!DOCTYPE html><html lang="ar"><head><meta charset="UTF-8"><title>Security Test Interface</title><meta http-equiv="Content-Security-Policy"
+content="default-src 'self' https:; script-src 'self' https: 'unsafe-inline'; connect-src https:;">
 
 <style>
 
@@ -8,6 +7,8 @@ body{
 font-family: Arial;
 text-align:center;
 margin-top:100px;
+background:black;
+color:white;
 }
 
 input{
@@ -20,7 +21,8 @@ padding:10px;
 margin-top:10px;
 }
 
-</style></head><body><h2>Security Test Interface</h2><input id="input" placeholder="اكتب هنا"><br><button onclick="checkInput()">Test</button>
+</style></head><body><h2>Security Test Interface</h2><input id="input" placeholder="اكتب هنا"><br><br>
 
-<p id="result"></p><script type="module" src="security.js"></script></body>
-</html>
+<button onclick="checkInput()">Test</button>
+
+<p id="result"></p><script type="module" src="security.js"></script></body></html>

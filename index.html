@@ -1,3 +1,26 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.firebaseio.com https://*.googleapis.com;"><title>Security Page</title></head><body><h2>Security Test</h2><input type="text" id="input"><button onclick="check()">Submit</button>
+<!DOCTYPE html><html lang="ar">
+<head><meta charset="UTF-8"><title>Security Test</title><meta http-equiv="Content-Security-Policy"
+content="default-src 'self' https://www.gstatic.com https://*.googleapis.com; script-src 'self' https://www.gstatic.com; connect-src https://*.googleapis.com;">
 
-<p id="result"></p><script type="module" src="security.js"></script></body></html>
+<style>
+
+body{
+font-family: Arial;
+text-align:center;
+margin-top:100px;
+}
+
+input{
+padding:10px;
+width:300px;
+}
+
+button{
+padding:10px;
+margin-top:10px;
+}
+
+</style></head><body><h2>Security Test Interface</h2><input id="input" placeholder="اكتب هنا"><br><button onclick="checkInput()">Test</button>
+
+<p id="result"></p><script type="module" src="security.js"></script></body>
+</html>

@@ -1,4 +1,4 @@
-console.log("security loaded");
+// Firebase
 
 import { initializeApp }
 from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -30,44 +30,88 @@ const app = initializeApp(firebaseConfig);
 
 const db = getFirestore(app);
 
-window.checkInput = async function(){
+// تقييم مستوى الخطورة
 
-console.log("button clicked");
+function getSeverity(text){
+
+text = text.toLowerCase();
+
+if(
+text.includes("<script") ||
+text.includes("onerror") ||
+text.includes("onload")
+){
+return "HIGH";
+}
+
+if(
+text.includes("select") ||
+text.includes("drop") ||
+text.includes("delete") ||
+text.includes("insert") ||
+text.includes("union")
+){
+return "MEDIUM";
+}
+
+if(
+text.includes("<") ||
+text.includes(">") ||
+text.includes("--")
+){
+return "LOW";
+}
+
+return "SAFE";
+
+}
+
+// زر Test
+
+window.checkInput = async function(){
 
 let input = document.getElementById("input").value;
 
 let result = document.getElementById("result");
 
-let attack = input.toLowerCase().includes("<script");
+let severity = getSeverity(input);
 
-if(attack){
+if(severity === "HIGH"){
 
-result.innerHTML = "⚠️ تم اكتشاف محاولة";
-
-}else{
-
-result.innerHTML = "✅ إدخال آمن";
+result.innerHTML = "🚨 High Risk Attack";
 
 }
 
-try{
+else if(severity === "MEDIUM"){
+
+result.innerHTML = "⚠️ Medium Risk Attack";
+
+}
+
+else if(severity === "LOW"){
+
+result.innerHTML = "🟡 Low Risk";
+
+}
+
+else{
+
+result.innerHTML = "✅ Safe";
+
+}
+
+// تسجيل في Firebase
 
 await addDoc(collection(db, "logs"), {
 
 text: input,
 
-attack: attack,
+severity: severity,
 
-time: new Date().toISOString()
+time: new Date().toISOString(),
+
+userAgent: navigator.userAgent
 
 });
-
-console.log("saved");
-
-}catch(e){
-
-console.log("error:", e);
-
-}
 
 };
